@@ -4,7 +4,7 @@
 **Created:** 2026-04-12
 **Author:** @github-copilot
 **Estimate:** M
-**Supersedes:** docs/specs/active/frontend-coverage-recovery-wave-2.md
+**Supersedes:** (previous repo-specific spec removed — see docs/specs/README.md for policy on repo-specific specs)
 
 ---
 

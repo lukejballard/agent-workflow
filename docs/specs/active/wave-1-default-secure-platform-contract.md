@@ -7,7 +7,7 @@
 **Created:** 2026-04-14
 **Author:** GitHub Copilot
 **Estimate:** M
-**Supersedes:** docs/specs/active/enterprise-readiness-95-program.md
+**Supersedes:** (previous repo-specific spec removed — see docs/specs/README.md for policy on repo-specific specs)
 
 ---
 
