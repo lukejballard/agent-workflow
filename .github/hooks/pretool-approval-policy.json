@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "windows": "python scripts\\agent\\pretool_approval_policy.py",
+        "linux": "python3 scripts/agent/pretool_approval_policy.py",
+        "osx": "python3 scripts/agent/pretool_approval_policy.py",
+        "timeout": 15
+      }
+    ]
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "description": "Deterministic workflow-contract benchmarks for prompt wrappers. These checks validate prompt entrypoint contracts, not end-to-end model quality.",
+  "benchmarks": [
+    {
+      "id": "single-entry-workflow",
+      "path": ".github/prompts/single-entry-workflow.prompt.md",
+      "agent": "orchestrator",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "execute",
+        "browser",
+        "sequential-thinking/*",
+        "github/*",
+        "fetch/*"
+      ],
+      "required_markers": [
+        "# Single-Entry Workflow",
+        "<goal>{{task}}</goal>",
+        "<constraints>{{constraints}}</constraints>",
+        "<done_when>{{done_when}}</done_when>",
+        "<current_step id=\"classify-and-route\">"
+      ]
+    },
+    {
+      "id": "greenfield-feature",
+      "path": ".github/prompts/greenfield-feature.prompt.md",
+      "agent": "orchestrator",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "execute",
+        "browser",
+        "sequential-thinking/*",
+        "github/*",
+        "fetch/*"
+      ],
+      "required_markers": [
+        "# Greenfield Feature Workflow",
+        "<goal>{{feature_idea}}</goal>",
+        "<constraints>{{constraints}}</constraints>",
+        "<done_when>{{done_when}}</done_when>",
+        "<current_step id=\"greenfield-classify-and-route\">"
+      ]
+    },
+    {
+      "id": "brownfield-improve",
+      "path": ".github/prompts/brownfield-improve.prompt.md",
+      "agent": "orchestrator",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "execute",
+        "browser",
+        "sequential-thinking/*",
+        "github/*",
+        "fetch/*"
+      ],
+      "required_markers": [
+        "# Brownfield Improvement Workflow",
+        "<goal>{{goal}}</goal>",
+        "<constraints>{{constraints}}</constraints>",
+        "<done_when>{{done_when}}</done_when>",
+        "Target module: {{target_path}}",
+        "<current_step id=\"brownfield-classify-and-route\">"
+      ]
+    },
+    {
+      "id": "bugfix-workflow",
+      "path": ".github/prompts/bugfix-workflow.prompt.md",
+      "agent": "orchestrator",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "execute",
+        "browser",
+        "sequential-thinking/*",
+        "github/*",
+        "fetch/*"
+      ],
+      "required_markers": [
+        "# Bugfix Workflow",
+        "<goal>Fix the bug affecting {{target}}</goal>",
+        "<constraints>{{constraints}}</constraints>",
+        "<done_when>{{done_when}}</done_when>",
+        "Symptoms: {{symptoms}}.",
+        "<current_step id=\"bugfix-classify-and-route\">"
+      ]
+    },
+    {
+      "id": "generate-tests",
+      "path": ".github/prompts/generate-tests.prompt.md",
+      "agent": "orchestrator",
+      "tools": [
+        "read",
+        "search",
+        "edit",
+        "execute",
+        "browser",
+        "sequential-thinking/*",
+        "github/*"
+      ],
+      "required_markers": [
+        "# Test Generation",
+        "Use the default orchestrator as a thin test-shaping wrapper for: {{target}}",
+        "Stack: {{stack}}",
+        "<goal>Add or improve tests for {{target}}</goal>",
+        "<current_step id=\"test-classify-and-route\">"
+      ]
+    },
+    {
+      "id": "research",
+      "path": ".github/prompts/research.prompt.md",
+      "agent": "orchestrator",
+      "tools": [
+        "read",
+        "search",
+        "github/*",
+        "fetch/*"
+      ],
+      "required_markers": [
+        "# Research-First Workflow",
+        "Feature or topic: {{topic}}",
+        "Specific questions to answer: {{questions}}",
+        "<current_step id=\"research-classify-and-route\">"
+      ]
+    },
+    {
+      "id": "review-code",
+      "path": ".github/prompts/review-code.prompt.md",
+      "agent": "orchestrator",
+      "tools": [
+        "read",
+        "search",
+        "github/*"
+      ],
+      "required_markers": [
+        "# Code Review",
+        "<goal>Review the changes at {{target}}</goal>",
+        "<current_step id=\"review-classify-and-route\">"
+      ]
+    },
+    {
+      "id": "launch-readiness-audit",
+      "path": ".github/prompts/launch-readiness-audit.prompt.md",
+      "agent": "orchestrator",
+      "tools": [
+        "read",
+        "search",
+        "browser",
+        "sequential-thinking/*",
+        "github/*",
+        "fetch/*"
+      ],
+      "required_markers": [
+        "# Launch-Readiness Audit",
+        "<goal>{{goal}}</goal>",
+        "<constraints>{{constraints}}</constraints>",
+        "<done_when>{{done_when}}</done_when>",
+        "Audience: {{audience}}.",
+        "<current_step id=\"launch-audit-classify-and-route\">"
+      ]
+    }
+  ]
+}

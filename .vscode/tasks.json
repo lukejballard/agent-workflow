@@ -1,0 +1,60 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Frontend Playwright E2E",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "--prefix",
+        "frontend",
+        "run",
+        "test:e2e",
+        "--",
+        "e2e/practitioner-video-flow.spec.ts"
+      ],
+      "isBackground": false
+    },
+    {
+      "label": "Run Frontend Playwright E2E (cwd)",
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "command": "npm",
+      "args": ["run", "test:e2e", "--", "e2e/practitioner-video-flow.spec.ts"],
+      "isBackground": false
+    },
+    {
+      "label": "Check Node Version",
+      "type": "shell",
+      "command": "node",
+      "args": ["-v"],
+      "presentation": {
+        "reveal": "always"
+      },
+      "isBackground": false
+    },
+    {
+      "label": "Run Playwright E2E (npx)",
+      "type": "shell",
+      "command": "npx",
+      "args": ["playwright", "test", "e2e/practitioner-video-flow.spec.ts", "--reporter=line"],
+      "isBackground": false
+    },
+    {
+      "label": "Frontend Typecheck",
+      "type": "shell",
+      "command": "npm",
+      "args": ["--prefix", "frontend", "run", "typecheck"],
+      "isBackground": false
+    },
+    {
+      "label": "Show Targeted Git Status",
+      "type": "shell",
+      "command": "git",
+      "args": ["status", "--short", ".gitignore", "frontend/package.json", "frontend/package-lock.json", "frontend/playwright.config.ts", "frontend/e2e/practitioner-video-flow.spec.ts", "src/biomechanics_ai/collector/workflow_routes.py"],
+      "isBackground": false
+    }
+  ]
+}

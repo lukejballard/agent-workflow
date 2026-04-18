@@ -1,0 +1,422 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Context Packet",
+  "description": "Structured prompt-facing packet for the active subtask in the repository's single-entry agent workflow. This is a bounded per-step contract, not a durable full-session memory dump.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "classification",
+    "goal",
+    "constraints",
+    "completed_steps",
+    "current_step",
+    "available_tools",
+    "working_memory",
+    "episodic_memory",
+    "semantic_memory",
+    "run_artifact",
+    "context_health",
+    "self_check"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "classification": {
+      "type": "string",
+      "minLength": 1
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "completed_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "task_id",
+          "summary",
+          "output",
+          "verification"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "output": {
+            "type": "string",
+            "minLength": 1
+          },
+          "verification": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "current_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "title",
+        "input_contract",
+        "output_contract",
+        "done_condition",
+        "route"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "input_contract": {
+          "type": "string",
+          "minLength": 1
+        },
+        "output_contract": {
+          "type": "string",
+          "minLength": 1
+        },
+        "done_condition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "route": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "task_graph": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "task_id",
+          "title",
+          "depends_on",
+          "input_contract",
+          "output_contract",
+          "done_condition",
+          "route"
+        ],
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "input_contract": {
+            "type": "string",
+            "minLength": 1
+          },
+          "output_contract": {
+            "type": "string",
+            "minLength": 1
+          },
+          "done_condition": {
+            "type": "string",
+            "minLength": 1
+          },
+          "route": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "available_tools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "working_memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "focus",
+        "scratchpad",
+        "stale_data_policy"
+      ],
+      "properties": {
+        "focus": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scratchpad": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "stale_data_policy": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "episodic_memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "episode_summary",
+        "retained_facts"
+      ],
+      "properties": {
+        "episode_summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retained_facts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "semantic_memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "retrieval_policy",
+        "scopes"
+      ],
+      "properties": {
+        "retrieval_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "retrieval_queries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "loaded_memories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "scope",
+              "source",
+              "summary"
+            ],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 1
+              },
+              "applied_tasks": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              }
+            }
+          }
+        },
+        "deferred_queries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "structured_reasoning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "retention_policy"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not-used",
+            "planned",
+            "used"
+          ]
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "retention_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "history_cleared": {
+          "type": "boolean"
+        },
+        "applies_to_task_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "run_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "task_ledger_policy"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "not-needed",
+            "active",
+            "required"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_ledger_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "last_recorded_task_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "context_health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_utilization_pct",
+        "trim_strategy",
+        "stale_output_policy"
+      ],
+      "properties": {
+        "max_utilization_pct": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "current_utilization_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "trim",
+            "compress",
+            "over-budget"
+          ]
+        },
+        "trim_strategy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stale_output_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "last_action": {
+          "type": "string"
+        }
+      }
+    },
+    "self_check": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

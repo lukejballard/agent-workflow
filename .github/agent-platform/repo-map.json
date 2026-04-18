@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "canonical": true,
+  "description": "Canonical repository topology, scoped-guide, and verification metadata for large-codebase agent work.",
+  "repository": {
+    "name": "baseball-biomechanics-ai",
+    "summary": "Baseball biomechanics application with a Python/FastAPI backend, React/Vite dashboard, shared tests, docs, and deploy assets."
+  },
+  "defaultReadOrder": [
+    "AGENTS.md",
+    ".github/copilot-instructions.md",
+    ".github/agent-platform/workflow-manifest.json",
+    ".github/agent-platform/repo-map.json",
+    ".github/agent-platform/skill-registry.json"
+  ],
+  "requirementsSources": [
+    "docs/specs/active/",
+    "openspec/changes/",
+    ".specify/",
+    "specs/",
+    "plan/"
+  ],
+  "topLevelAreas": [
+    {
+      "path": ".github/",
+      "role": "Agent workflow, prompts, skills, hooks, and CI governance",
+      "guide": "AGENTS.md"
+    },
+    {
+      "path": "src/biomechanics_ai/",
+      "role": "Python backend, collector, SDK, storage, analysis, and execution code",
+      "guide": "src/AGENTS.md"
+    },
+    {
+      "path": "frontend/",
+      "role": "React + TypeScript + Vite dashboard",
+      "guide": "frontend/AGENTS.md"
+    },
+    {
+      "path": "tests/",
+      "role": "Python unit and integration tests",
+      "guide": "tests/AGENTS.md"
+    },
+    {
+      "path": "docs/",
+      "role": "Architecture, setup, specs, and contributor runbooks",
+      "guide": "docs/AGENTS.md"
+    },
+    {
+      "path": "deploy/",
+      "role": "Deployment manifests and operational assets",
+      "guide": "AGENTS.md"
+    },
+    {
+      "path": "openspec/",
+      "role": "Brownfield change proposals",
+      "guide": "AGENTS.md"
+    },
+    {
+      "path": ".specify/",
+      "role": "Greenfield planning artifacts",
+      "guide": "AGENTS.md"
+    }
+  ],
+  "domainSurfaces": [
+    {
+      "path": "src/biomechanics_ai/",
+      "kind": "backend",
+      "guide": "src/AGENTS.md",
+      "instructions": [
+        ".github/instructions/python.instructions.md",
+        ".github/instructions/api.instructions.md",
+        ".github/instructions/database.instructions.md",
+        ".github/instructions/security.instructions.md",
+        ".github/instructions/performance.instructions.md"
+      ],
+      "highRiskPaths": [
+        "src/biomechanics_ai/sdk/",
+        "src/biomechanics_ai/collector/",
+        "src/biomechanics_ai/storage/"
+      ],
+      "notes": [
+        "Collector routes should stay thin.",
+        "Analysis code should stay pure and free of database I/O.",
+        "SDK changes must never break user pipelines on telemetry failure."
+      ],
+      "tests": [
+        "tests/"
+      ],
+      "knownSubpaths": [
+        {
+          "path": "src/biomechanics_ai/sdk/",
+          "role": "User-facing telemetry SDK"
+        },
+        {
+          "path": "src/biomechanics_ai/collector/",
+          "role": "FastAPI app, routes, and startup"
+        },
+        {
+          "path": "src/biomechanics_ai/storage/",
+          "role": "SQLAlchemy models and session factory"
+        },
+        {
+          "path": "src/biomechanics_ai/analysis/",
+          "role": "Pure analysis functions"
+        },
+        {
+          "path": "src/biomechanics_ai/alerts/",
+          "role": "Webhook-based alert manager"
+        },
+        {
+          "path": "src/biomechanics_ai/cli/",
+          "role": "Typer CLI entry points and terminal UX"
+        },
+        {
+          "path": "src/biomechanics_ai/observability/",
+          "role": "OTel traces and Prometheus metrics"
+        },
+        {
+          "path": "src/biomechanics_ai/plugins/",
+          "role": "Plugin protocol, built-in plugins, and registry"
+        },
+        {
+          "path": "src/biomechanics_ai/workers/",
+          "role": "Background task utilities"
+        },
+        {
+          "path": "src/biomechanics_ai/config/",
+          "role": "Environment-driven configuration"
+        },
+        {
+          "path": "src/biomechanics_ai/models/",
+          "role": "Shared request and response models"
+        },
+        {
+          "path": "src/biomechanics_ai/dashboard/",
+          "role": "Dashboard service entry point if present"
+        },
+        {
+          "path": "src/biomechanics_ai/execution/",
+          "role": "Pipeline execution helpers if present"
+        }
+      ],
+      "observedAdditionalPaths": [
+        "src/biomechanics_ai/services/"
+      ]
+    },
+    {
+      "path": "frontend/",
+      "kind": "frontend",
+      "guide": "frontend/AGENTS.md",
+      "instructions": [
+        ".github/instructions/react.instructions.md",
+        ".github/instructions/typescript.instructions.md",
+        ".github/instructions/accessibility.instructions.md",
+        ".github/instructions/security.instructions.md",
+        ".github/instructions/performance.instructions.md"
+      ],
+      "highRiskPaths": [
+        "frontend/src/pages/",
+        "frontend/src/api/",
+        "frontend/src/components/"
+      ],
+      "notes": [
+        "No direct fetch() belongs in pages or components.",
+        "Pages should stay thin and business logic should live in hooks, context, or API helpers.",
+        "Accessibility review remains required for user-facing UI changes."
+      ],
+      "tests": [
+        "frontend/src/__tests__/",
+        "frontend/tests/"
+      ],
+      "knownSubpaths": [
+        {
+          "path": "frontend/src/api/",
+          "role": "Typed collector API helpers"
+        },
+        {
+          "path": "frontend/src/components/",
+          "role": "Shared and reusable UI components"
+        },
+        {
+          "path": "frontend/src/context/",
+          "role": "React context providers"
+        },
+        {
+          "path": "frontend/src/hooks/",
+          "role": "Custom hooks for data loading and derived state"
+        },
+        {
+          "path": "frontend/src/pages/",
+          "role": "Top-level page components mounted by the router"
+        },
+        {
+          "path": "frontend/src/types/",
+          "role": "Shared TypeScript interfaces mirroring API responses"
+        },
+        {
+          "path": "frontend/src/__tests__/",
+          "role": "Vitest unit and component tests"
+        }
+      ]
+    },
+    {
+      "path": "tests/",
+      "kind": "tests",
+      "guide": "tests/AGENTS.md",
+      "instructions": [
+        ".github/instructions/testing.instructions.md"
+      ],
+      "highRiskPaths": [
+        "tests/integration/"
+      ],
+      "notes": [
+        "Unit tests should stay isolated from external I/O.",
+        "Integration tests that require live services should be marked explicitly."
+      ]
+    },
+    {
+      "path": "docs/",
+      "kind": "docs",
+      "guide": "docs/AGENTS.md",
+      "instructions": [],
+      "highRiskPaths": [
+        "docs/specs/active/",
+        "docs/runbooks/"
+      ],
+      "notes": [
+        "Workflow and contributor docs should update in the same change set as workflow metadata.",
+        "Do not invent behavior that is not confirmed by code or repo metadata."
+      ]
+    },
+    {
+      "path": ".github/",
+      "kind": "agent-platform",
+      "guide": "AGENTS.md",
+      "instructions": [],
+      "highRiskPaths": [
+        ".github/agents/",
+        ".github/prompts/",
+        ".github/skills/",
+        ".github/hooks/",
+        ".github/workflows/",
+        ".github/agent-platform/"
+      ],
+      "notes": [
+        "Keep workflow-manifest.json, repo-map.json, and skill-registry.json aligned.",
+        "Workflow or skill changes should update docs/runbooks/agent-mode.md and docs/copilot-setup.md."
+      ]
+    }
+  ],
+  "changeRouting": [
+    {
+      "whenPathMatches": [
+        "src/biomechanics_ai/**"
+      ],
+      "readBeforeEditing": [
+        "AGENTS.md",
+        "src/AGENTS.md",
+        ".github/agent-platform/repo-map.json"
+      ],
+      "verifyWith": [
+        "pytest tests/ -v",
+        "pytest tests/unit/ --cov=src/biomechanics_ai --cov-report=term-missing"
+      ]
+    },
+    {
+      "whenPathMatches": [
+        "frontend/**"
+      ],
+      "readBeforeEditing": [
+        "AGENTS.md",
+        "frontend/AGENTS.md",
+        ".github/agent-platform/repo-map.json"
+      ],
+      "verifyWith": [
+        "cd frontend && npm run typecheck",
+        "cd frontend && npm run test"
+      ]
+    },
+    {
+      "whenPathMatches": [
+        "tests/**"
+      ],
+      "readBeforeEditing": [
+        "AGENTS.md",
+        "tests/AGENTS.md",
+        ".github/agent-platform/repo-map.json"
+      ],
+      "verifyWith": [
+        "pytest tests/ -v"
+      ]
+    },
+    {
+      "whenPathMatches": [
+        "docs/**"
+      ],
+      "readBeforeEditing": [
+        "AGENTS.md",
+        "docs/AGENTS.md",
+        ".github/agent-platform/repo-map.json"
+      ],
+      "verifyWith": []
+    },
+    {
+      "whenPathMatches": [
+        ".github/**",
+        "scripts/agent/**"
+      ],
+      "readBeforeEditing": [
+        "AGENTS.md",
+        ".github/agent-platform/workflow-manifest.json",
+        ".github/agent-platform/repo-map.json",
+        ".github/agent-platform/skill-registry.json"
+      ],
+      "verifyWith": [
+        "python scripts/agent/sync_agent_platform.py --check"
+      ]
+    }
+  ],
+  "verificationRoutes": {
+    "backend": [
+      "pytest tests/ -v",
+      "pytest tests/unit/ --cov=src/biomechanics_ai --cov-report=term-missing"
+    ],
+    "frontend": [
+      "cd frontend && npm run typecheck",
+      "cd frontend && npm run test"
+    ],
+    "contracts": [],
+    "agentPlatform": [
+      "python scripts/agent/sync_agent_platform.py --check"
+    ]
+  },
+  "sensitiveSurfaces": [
+    ".github/hooks/",
+    ".github/workflows/",
+    ".github/agent-platform/",
+    "scripts/agent/",
+    ".vscode/settings.json",
+    ".vscode/mcp.json",
+    ".github/copilot-instructions.md",
+    ".env"
+  ]
+}

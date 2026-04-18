@@ -1,0 +1,141 @@
+name: PR Quality Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  workflow-governance:
+    name: Workflow governance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Capture changed files
+        run: git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
+
+      - name: Require companion workflow docs for workflow-surface changes
+        run: python scripts/agent/check_workflow_traceability.py --changed-files-file changed-files.txt
+
+      - name: Check workflow benchmarks
+        run: python scripts/agent/check_workflow_benchmarks.py
+
+      - name: Check agent-platform metadata
+        run: python scripts/agent/sync_agent_platform.py --check
+
+  check-spec:
+    name: Spec or exemption required
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for specific spec reference or exemption
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          BODY="${{ github.event.pull_request.body }}"
+          SPEC_LINE=$(printf '%s\n' "$BODY" | grep -iE '^Spec:[[:space:]]*' | head -n 1 || true)
+          SPEC_VALUE=$(printf '%s\n' "$SPEC_LINE" | sed -E 's/^[Ss]pec:[[:space:]]*//' | tr -d '\r')
+          SPEC_VALUE=$(printf '%s' "$SPEC_VALUE" | sed -E 's/[[:space:]]+$//')
+
+          if echo "$TITLE" | grep -q "\[no-spec\]"; then
+            if [ -n "$SPEC_VALUE" ] && [ "$SPEC_VALUE" != "[no-spec]" ]; then
+              echo "ERROR: PR title declares [no-spec] but the body references a spec path."
+              echo "Either remove [no-spec] from the title or set 'Spec: [no-spec]' in the PR body."
+              exit 1
+            fi
+
+            echo "Exemption declared in PR title: [no-spec]"
+            exit 0
+          fi
+
+          if [ -z "$SPEC_VALUE" ]; then
+            echo "ERROR: PR body must include 'Spec: docs/specs/active/<slug>.md' or use [no-spec] in the PR title."
+            exit 1
+          fi
+
+          if [ "$SPEC_VALUE" = "[no-spec]" ]; then
+            echo "ERROR: PR body uses [no-spec] but the PR title is missing [no-spec]."
+            echo "For small fixes, add [no-spec] to the PR title."
+            exit 1
+          fi
+
+          if ! printf '%s\n' "$SPEC_VALUE" | grep -Eq '^docs/specs/active/[A-Za-z0-9._/-]+\.md$'; then
+            echo "ERROR: Spec reference must point to a specific file under docs/specs/active/."
+            echo "Found: $SPEC_VALUE"
+            exit 1
+          fi
+
+          if [ ! -f "$SPEC_VALUE" ]; then
+            echo "ERROR: Referenced spec file does not exist: $SPEC_VALUE"
+            exit 1
+          fi
+
+          echo "Spec reference verified: $SPEC_VALUE"
+
+  check-pr-template:
+    name: PR checklist not empty
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR body has content
+        run: |
+          BODY="${{ github.event.pull_request.body }}"
+          if [ -z "$BODY" ] || [ ${#BODY} -lt 100 ]; then
+            echo "ERROR: PR description is missing or too short."
+            echo "Fill out the PR template completely."
+            exit 1
+          fi
+
+  check-test-files:
+    name: Test files exist for changed source files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for test files
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E "\.(py|ts|tsx)$" \
+            | grep -v "\.test\." \
+            | grep -v "\.spec\." \
+            | grep -v "__tests__" \
+            | grep -v "^tests/" \
+            | while read file; do
+              echo "Source file changed: $file"
+              base=$(basename "$file" .py)
+              base=$(basename "$base" .ts)
+              base=$(basename "$base" .tsx)
+              if ! find . -name "${base}.test.ts" -o -name "${base}.test.tsx" \
+                         -o -name "test_${base}.py" -o -name "${base}_test.py" \
+                         2>/dev/null | grep -q .; then
+                echo "WARNING: No test file found for $file — ensure tests exist"
+              fi
+            done
+
+  docs-traceability-advisory:
+    name: Docs and traceability advisory
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Warn on likely missing docs or workflow updates
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          echo "$CHANGED"
+
+          if echo "$CHANGED" | grep -Eq "^(\.github/|docs/|AGENTS\.md|frontend/AGENTS\.md|src/AGENTS\.md|tests/AGENTS\.md)"; then
+            if ! echo "$CHANGED" | grep -Eq "^(docs/|\.github/PULL_REQUEST_TEMPLATE\.md|docs/specs/active/|docs/specs/research/)"; then
+              echo "WARNING: Workflow or agent files changed without matching docs or spec updates."
+            fi
+          fi
+
+          if echo "$CHANGED" | grep -Eq "^(src/|frontend/)"; then
+            if ! echo "$CHANGED" | grep -Eq "^(tests/|frontend/tests/|frontend/src/__tests__/|docs/specs/active/)"; then
+              echo "WARNING: Product code changed without obvious tests or active spec updates."
+            fi
+          fi

@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 2,
+  "classification": "brownfield-improvement",
+  "goal": "Implement phase 2 of the repository's agent context-engineering architecture using the existing single-entry orchestrator.",
+  "constraints": [
+    "Keep the rollout incremental and compatible with the existing single-entry orchestrator.",
+    "Do not pretend editor-managed memory notes are ordinary repo files for validation purposes.",
+    "Use the existing run-artifact and context-packet contracts instead of adding a separate memory artifact."
+  ],
+  "completed_steps": [
+    {
+      "task_id": "classify-phase-2",
+      "summary": "Classified the work as a brownfield improvement and mapped the delta from phase 1.",
+      "output": "Identified three missing operational behaviors: run-artifact activation, repo-memory hydration recording, and a concrete brownfield trace.",
+      "verification": "Read the active phase-1 spec, workflow manifest, packet schema, examples, and validator wiring."
+    },
+    {
+      "task_id": "probe-memory-surface",
+      "summary": "Checked whether repo memory notes were exposed as normal workspace files.",
+      "output": "Confirmed that `/memories/repo` is editor-managed here and should be modeled by source metadata instead of filesystem validation.",
+      "verification": "A direct directory listing for `/memories/repo` failed with ENOENT in the local workspace."
+    }
+  ],
+  "current_step": {
+    "task_id": "patch-phase-2-contracts",
+    "title": "Upgrade the packet and activate run artifacts for real multi-step brownfield work",
+    "depends_on": [
+      "classify-phase-2",
+      "probe-memory-surface"
+    ],
+    "input_contract": "Current agent-platform metadata, phase-1 spec, and existing packet plus run-artifact examples.",
+    "output_contract": "A richer packet contract, active run-artifact policy, a concrete brownfield example pair, and passing validation.",
+    "done_condition": "The validator accepts the richer packet and the new brownfield examples, and the default workflow docs describe the same behavior.",
+    "route": "tool:edit",
+    "evidence_refs": [
+      "docs/specs/done/agent-context-engineering-phase-1.md",
+      ".github/agent-platform/context-packet.schema.json",
+      "scripts/agent/sync_agent_platform.py"
+    ]
+  },
+  "task_graph": [
+    {
+      "task_id": "patch-phase-2-contracts",
+      "title": "Upgrade the packet and activate run artifacts",
+      "depends_on": [
+        "classify-phase-2",
+        "probe-memory-surface"
+      ],
+      "input_contract": "Workflow manifest, packet schema, examples, and validator.",
+      "output_contract": "Updated metadata and validation wiring.",
+      "done_condition": "Schema, examples, and validation agree on the richer contract.",
+      "route": "tool:edit"
+    },
+    {
+      "task_id": "align-default-flow",
+      "title": "Update orchestrator, prompts, and docs to use the richer packet",
+      "depends_on": [
+        "patch-phase-2-contracts"
+      ],
+      "input_contract": "Default orchestrator, prompt wrappers, and contributor docs.",
+      "output_contract": "Active run-artifact and memory-hydration guidance in the default path.",
+      "done_condition": "The default brownfield and bugfix prompts describe the same behavior as the manifest and packet.",
+      "route": "tool:edit"
+    },
+    {
+      "task_id": "validate-phase-2",
+      "title": "Validate the packet and brownfield example pair",
+      "depends_on": [
+        "patch-phase-2-contracts",
+        "align-default-flow"
+      ],
+      "input_contract": "Updated metadata, examples, validator script, and docs.",
+      "output_contract": "A passing agent-platform validation run and final traceability notes.",
+      "done_condition": "`python scripts/agent/sync_agent_platform.py --check` passes.",
+      "route": "tool:execute"
+    }
+  ],
+  "available_tools": [
+    "read",
+    "search",
+    "edit",
+    "execute"
+  ],
+  "working_memory": {
+    "focus": "Phase-2 contract activation for run artifacts and repo-memory hydration.",
+    "scratchpad": [
+      "Upgrade packet schema to record active run-artifact state.",
+      "Add loaded repo-memory sources as summaries instead of raw note dumps.",
+      "Add a concrete brownfield packet and run-artifact example pair."
+    ],
+    "stale_data_policy": "Keep only the active phase-2 subtask live and compress earlier tool output into completed-step summaries."
+  },
+  "episodic_memory": {
+    "episode_summary": "Phase 1 is complete. Phase 2 is making run artifacts and repo-memory hydration operational in the default path.",
+    "retained_facts": [
+      "The default orchestrator already uses the packet contract, but it does not yet activate run artifacts by default.",
+      "Repo-memory notes are editor-managed in this environment and should be referenced by source metadata, not filesystem validation.",
+      "The sync validator already checks packet and run-artifact examples and can be extended for the new brownfield pair."
+    ]
+  },
+  "semantic_memory": {
+    "retrieval_policy": "Load repo or editor-managed memory only when the current brownfield subtask needs missing facts, then keep a short source-backed summary in the packet.",
+    "scopes": [
+      "repo",
+      "session",
+      "user"
+    ],
+    "retrieval_queries": [
+      "agent customization tooling guidance",
+      "baseball-biomechanics-ai repository overview"
+    ],
+    "loaded_memories": [
+      {
+        "scope": "repo",
+        "source": "/memories/repo/agent_customization_tooling.md",
+        "summary": "Use existing agent customization primitives and keep the workflow inside the repo's orchestrator architecture.",
+        "applied_tasks": [
+          "patch-phase-2-contracts",
+          "align-default-flow"
+        ]
+      },
+      {
+        "scope": "repo",
+        "source": "/memories/repo/baseball-biomechanics-ai-overview.md",
+        "summary": "The repository's canonical path is a single-entry orchestrator with metadata under `.github/agent-platform/`.",
+        "applied_tasks": [
+          "align-default-flow"
+        ]
+      }
+    ],
+    "deferred_queries": [
+      "session-specific packet examples if the validator reveals a missing field"
+    ]
+  },
+  "run_artifact": {
+    "mode": "required",
+    "path": ".github/agent-platform/examples/brownfield-run-artifact.json",
+    "task_ledger_policy": "Record a taskLedger entry after each completed subtask because this workflow spans specs, metadata, prompts, docs, and validation.",
+    "last_recorded_task_id": "probe-memory-surface"
+  },
+  "context_health": {
+    "max_utilization_pct": 70,
+    "current_utilization_pct": 52,
+    "status": "ok",
+    "trim_strategy": "Keep the goal anchor, classification, current step, loaded memory summaries, and latest evidence; drop stale raw output after each finished subtask.",
+    "stale_output_policy": "Raw output expires after the subtask that used it unless it is promoted into evidence or episodic memory.",
+    "last_action": "Compressed the memory-probe result into completed_steps instead of carrying the failed directory listing forward."
+  },
+  "self_check": "Before responding, verify the phase-2 output activates run artifacts, records hydrated memory sources, and validates the concrete brownfield example pair."
+}
