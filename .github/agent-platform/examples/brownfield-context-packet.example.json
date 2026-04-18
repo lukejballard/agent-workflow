@@ -107,7 +107,7 @@
     ],
     "retrieval_queries": [
       "agent customization tooling guidance",
-      "baseball-biomechanics-ai repository overview"
+      "agent-workflow repository overview"
     ],
     "loaded_memories": [
       {
@@ -121,7 +121,7 @@
       },
       {
         "scope": "repo",
-        "source": "/memories/repo/baseball-biomechanics-ai-overview.md",
+        "source": "/memories/repo/agent-workflow-overview.md",
         "summary": "The repository's canonical path is a single-entry orchestrator with metadata under `.github/agent-platform/`.",
         "applied_tasks": [
           "align-default-flow"

@@ -53,8 +53,8 @@ After `docker compose up -d`, verify:
 
 ```bash
 # Build images
-docker build -f Dockerfile.backend -t baseball-biomechanics-ai-backend:local .
-docker build -f Dockerfile.frontend -t baseball-biomechanics-ai-frontend:local .
+docker build -f Dockerfile.backend -t app-backend:local .
+docker build -f Dockerfile.frontend -t app-frontend:local .
 
 # Start all services
 docker compose up -d

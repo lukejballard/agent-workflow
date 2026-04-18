@@ -17,7 +17,7 @@ Examples of useful checks in the current snapshot include:
 ## What Is Not Yet A Credible CI/CD Claim
 
 Until the actual application trees are restored, this repo should not present itself as a
-fully validated build-and-deploy pipeline for a production biomechanics application.
+fully validated build-and-deploy pipeline for a concrete application runtime.
 That means backend test matrices, frontend bundles, container images, and environment-
 specific deployment promotions remain provisional.
 
@@ -26,5 +26,5 @@ specific deployment promotions remain provisional.
 Once runtime code is restored, CI/CD should be rebuilt around:
 1. backend lint, type, unit, and integration checks
 2. frontend lint, type, unit, accessibility, and visual regression checks
-3. end-to-end workflow validation for core practitioner use cases
+3. end-to-end workflow validation for the first supported user journey
 4. artifact packaging and environment-specific deployment validation

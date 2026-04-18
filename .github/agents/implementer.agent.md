@@ -26,7 +26,7 @@ You do not add features. You do not simplify requirements.
 4. Read the nearest scoped `AGENTS.md` for the target area (`src/`, `frontend/`,
    `tests/`, `docs/`) before changing files there.
 5. Identify which repository area owns each change:
-   - Backend, collector, storage, SDK, analysis, execution → `src/biomechanics_ai/`
+   - Backend or shared runtime code → `src/`
    - Frontend pages, components, hooks, API clients, types → `frontend/src/`
    - Python tests → `tests/`
    - Frontend tests → `frontend/src/__tests__/` or `frontend/tests/`

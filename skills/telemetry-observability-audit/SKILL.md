@@ -1,12 +1,12 @@
 # Skill: Telemetry / Observability Audit
 
-**Scope:** `src/biomechanics_ai/observability/`, `src/biomechanics_ai/sdk/`, `src/biomechanics_ai/collector/`, `src/biomechanics_ai/plugins/`
+**Scope:** Observability-related code under `src/`.
 
-**Purpose:** Ensure that collector, SDK, and telemetry surfaces emit correct, complete, and non-fatal observability signals before a release or after a significant change.
+**Purpose:** Ensure that backend, SDK, and telemetry surfaces emit correct, complete, and non-fatal observability signals before a release or after a significant change.
 
 **When to invoke:**
-- Before a production release of the collector or SDK.
-- After adding or modifying a collector route or analysis module.
+- Before a production release of the backend or SDK.
+- After adding or modifying a route, service, or analysis module.
 - When a user reports missing spans, gaps in metrics, or silent failures in the SDK.
 
 ---

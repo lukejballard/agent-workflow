@@ -10,9 +10,9 @@ This file provides agent guidance scoped to **documentation** (`docs/`).
 |---|---|---|
 | `docs/architecture.md` | Engineering | A new component, endpoint, or table is added |
 | `docs/quickstart.md` | Engineering | The startup process or example commands change |
-| `docs/roadmap.md` | Maintainers only | A milestone is completed or a new one is planned |
+| `docs/ci-cd.md` | Engineering | CI behavior, validation scope, or release expectations change |
 | `docs/copilot-setup.md` | Engineering | The Copilot/agent setup changes |
-| `docs/images/` | Engineering | Real screenshots replace placeholder files |
+| `docs/specs/` | Engineering | Working specs, completions, or spec policy change |
 
 ---
 

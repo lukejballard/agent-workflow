@@ -44,7 +44,7 @@ specialist-only behavior.
 10. If the task is release-sensitive or domain-specific, consult the relevant checklist in `skills/` or `.github/skills/`.
 
 # Codebase-aware routing
-- `src/biomechanics_ai/` is the Python backend, collector, SDK, storage, analysis, and execution code.
+- `src/` is the backend or shared application code area when runtime code is present.
 - `frontend/` is a React + TypeScript + Vite SPA, not a Next.js app.
 - `tests/` contains Python tests; frontend tests live under `frontend/src/__tests__/` and `frontend/tests/`.
 - `docs/` contains contributor and architecture docs that must stay aligned with code.

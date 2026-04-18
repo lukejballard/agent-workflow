@@ -1,4 +1,4 @@
-# Agent-Mode Operating Model — baseball-biomechanics-ai
+# Agent-Mode Operating Model — agent-workflow
 
 This runbook documents how to use GitHub Copilot in agent mode effectively within
 this repository. It covers the default single-entry workflow, when to use the
@@ -8,7 +8,7 @@ fallback specialist agents, when to invoke quality skills, and the definition of
 
 ## Overview
 
-baseball-biomechanics-ai uses a layered agent-mode stack:
+This repository uses a layered agent-mode stack:
 
 ```
 .github/copilot-instructions.md              ← always-on context and production standards
@@ -76,7 +76,7 @@ The orchestrator should route itself using the real repository layout:
 
 | Area | Meaning | Local guide |
 |---|---|---|
-| `src/biomechanics_ai/` | Python backend, collector, SDK, storage, analysis, execution | `src/AGENTS.md` |
+| `src/` | Backend or shared application code when present | `src/AGENTS.md` |
 | `frontend/` | React + TypeScript + Vite dashboard | `frontend/AGENTS.md` |
 | `tests/` | Python unit and integration tests | `tests/AGENTS.md` |
 | `docs/` | Architecture and contributor docs | `docs/AGENTS.md` |

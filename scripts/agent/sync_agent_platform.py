@@ -25,8 +25,8 @@ TOP_LEVEL_AREAS = [
         "guide": "AGENTS.md",
     },
     {
-        "path": "src/pipeline_observe/",
-        "role": "Python backend, collector, SDK, storage, analysis, and execution code",
+        "path": "src/",
+        "role": "Backend or shared application code when present",
         "guide": "src/AGENTS.md",
     },
     {
@@ -63,7 +63,7 @@ TOP_LEVEL_AREAS = [
 
 DOMAIN_SURFACES = [
     {
-        "path": "src/pipeline_observe/",
+        "path": "src/",
         "kind": "backend",
         "guide": "src/AGENTS.md",
         "instructions": [
@@ -75,29 +75,22 @@ DOMAIN_SURFACES = [
         ],
         "tests": ["tests/"],
         "knownSubpaths": {
-            "src/pipeline_observe/sdk/": "User-facing telemetry SDK",
-            "src/pipeline_observe/collector/": "FastAPI app, routes, and startup",
-            "src/pipeline_observe/storage/": "SQLAlchemy models and session factory",
-            "src/pipeline_observe/analysis/": "Pure analysis functions",
-            "src/pipeline_observe/alerts/": "Webhook-based alert manager",
-            "src/pipeline_observe/cli/": "Typer CLI entry points and terminal UX",
-            "src/pipeline_observe/observability/": "OTel traces and Prometheus metrics",
-            "src/pipeline_observe/plugins/": "Plugin protocol, built-in plugins, and registry",
-            "src/pipeline_observe/workers/": "Background task utilities",
-            "src/pipeline_observe/config/": "Environment-driven configuration",
-            "src/pipeline_observe/models/": "Shared request and response models",
-            "src/pipeline_observe/dashboard/": "Dashboard service entry point if present",
-            "src/pipeline_observe/execution/": "Pipeline execution helpers if present",
+            "src/api/": "Route or handler modules if present",
+            "src/services/": "Service or orchestration modules if present",
+            "src/storage/": "Storage or repository helpers if present",
+            "src/analysis/": "Pure analysis or transformation modules if present",
+            "src/models/": "Shared request, response, or domain models if present",
+            "src/config/": "Environment-driven configuration if present",
         },
         "highRiskPaths": [
-            "src/pipeline_observe/sdk/",
-            "src/pipeline_observe/collector/",
-            "src/pipeline_observe/storage/",
+            "src/api/",
+            "src/services/",
+            "src/storage/",
         ],
         "notes": [
-            "Collector routes should stay thin.",
+            "Route and handler modules should stay thin.",
             "Analysis code should stay pure and free of database I/O.",
-            "SDK changes must never break user pipelines on telemetry failure.",
+            "Do not document runtime surfaces that are not present in the workspace.",
         ],
     },
     {
@@ -114,7 +107,7 @@ DOMAIN_SURFACES = [
         "tests": ["frontend/src/__tests__/", "frontend/tests/"],
         "observedBasePath": "frontend/src/",
         "knownSubpaths": {
-            "frontend/src/api/": "Typed collector API helpers",
+            "frontend/src/api/": "Typed API helpers",
             "frontend/src/components/": "Shared and reusable UI components",
             "frontend/src/context/": "React context providers",
             "frontend/src/hooks/": "Custom hooks for data loading and derived state",
@@ -439,10 +432,14 @@ def build_domain_surface(
 
 
 def build_backend_verification_routes(repo_root: Path) -> list[str]:
-    routes = ["pytest tests/ -v"]
+    routes: list[str] = []
+    if existing_relative_file(repo_root, "tests/unit") or existing_relative_file(
+        repo_root, "tests/integration"
+    ):
+        routes.append("pytest tests/ -v")
     if existing_relative_file(repo_root, "tests/unit"):
         routes.append(
-            "pytest tests/unit/ --cov=src/pipeline_observe --cov-report=term-missing"
+            "pytest tests/unit/ --cov=src --cov-report=term-missing"
         )
     return routes
 
@@ -493,8 +490,8 @@ def build_repo_map(
         "canonical": True,
         "description": "Canonical repository topology, scoped-guide, and verification metadata for large-codebase agent work.",
         "repository": {
-            "name": "pipeline-observe",
-            "summary": "Production fullstack application with a Python/FastAPI backend, React/Vite dashboard, shared tests, docs, and deploy assets.",
+            "name": "agent-workflow",
+            "summary": "Reusable repository scaffold for agent-driven software delivery with docs, workflow metadata, helper scripts, and optional runtime areas.",
         },
         "defaultReadOrder": [
             "AGENTS.md",
@@ -514,7 +511,7 @@ def build_repo_map(
         "domainSurfaces": domain_surfaces,
         "changeRouting": [
             {
-                "whenPathMatches": ["src/pipeline_observe/**"],
+                "whenPathMatches": ["src/**"],
                 "readBeforeEditing": [
                     "AGENTS.md",
                     "src/AGENTS.md",
@@ -540,7 +537,7 @@ def build_repo_map(
                     "tests/AGENTS.md",
                     ".github/agent-platform/repo-map.json",
                 ],
-                "verifyWith": ["pytest tests/ -v"],
+                "verifyWith": backend_routes,
             },
             {
                 "whenPathMatches": ["docs/**"],

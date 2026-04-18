@@ -1,69 +1,57 @@
 # Architecture
 
-## Product Goal
+## Repository Goal
 
-baseball-biomechanics-ai is intended to support baseball practitioners and athletes with
-better biomechanics assessment, review, and prescription workflows.
+This repository is a generic scaffold for agent-driven software delivery. Its
+stable value today is the workflow control plane: instructions, prompts,
+skills, specs, and maintenance scripts that help contributors build or restore
+an application safely.
 
 ## Verified Repo State
 
-The repository is still documentation- and workflow-heavy, but it now also includes a
-minimal aligned application runtime. The following areas are present and verified:
-- `.github/` agent workflows, instructions, and repo metadata
+The following areas are present and verified in this snapshot:
+- `.github/` agent workflows, instructions, prompts, and metadata
 - `docs/` contributor, architecture, and planning documentation
-- `openspec/`, `specs/`, and `plan/` inherited planning artifacts
+- `openspec/`, `specs/`, and `.specify/` planning inputs and templates
 - `scripts/` helper and maintenance scripts
-- `src/biomechanics_ai/` FastAPI runtime bootstrap
-- `frontend/` React + TypeScript + Vite practitioner workspace bootstrap
-- `tests/` initial Python API coverage
+- scoped guidance files under `src/`, `frontend/`, and `tests/`
 
 ## Current Architectural Truth
 
-The current bootstrap architecture is best understood as four layers:
+The current architecture is best understood as four layers:
 
-1. A FastAPI collector layer in `src/biomechanics_ai/collector/` that owns transport,
-	auth, error shaping, and route registration.
-2. A service and storage layer in `src/biomechanics_ai/services/` and
-	`src/biomechanics_ai/storage/` that keeps workflow orchestration separate from
-	file-backed persistence.
-3. A React frontend in `frontend/src/` that keeps API transport in `api/`, shared types
-	in `types/`, and workflow state in hooks instead of in page components.
-4. Documentation, planning, and governance surfaces that define product direction and
-	contributor workflow.
+1. A workflow-governance layer in `.github/` that defines instructions,
+	prompts, agents, approval hooks, and canonical metadata.
+2. A documentation and planning layer in `docs/`, `specs/`, `openspec/`, and
+	`.specify/` that captures requirements, process, and repo operating rules.
+3. A maintenance layer in `scripts/` that validates metadata and supports repo
+	hygiene.
+4. Reserved application areas in `src/`, `frontend/`, `tests/`, and `deploy/`
+	for project-specific runtime code once a concrete product direction is chosen.
 
-## Bootstrap Runtime Shape
+## Current Constraints
 
-The current runtime implements the first practitioner flow:
-- athlete creation and listing
-- session registration and listing
-- assessment draft creation, updates, and reviewer finalization
-- baseline comparison between sessions
-- prescription generation
-- shareable report links with revoke support
-- health and Prometheus metrics endpoints
-
-Current constraints:
-- persistence is a local JSON store, not a relational database
-- auth is env-configured bearer-token role mapping
-- frontend coverage is limited to the practitioner workspace bootstrap
-- deployment assets for this new runtime have not been refreshed yet
+This snapshot does not currently contain a validated backend or frontend
+runtime. As a result:
+- CI and task automation should stay scoped to repo hygiene and metadata checks
+- docs must not claim concrete API, UI, or deployment behavior
+- product-domain naming should remain generic until real application code exists
 
 ## Documentation Rules
 
-Docs in this repository should avoid inventing capabilities beyond the bootstrap runtime,
-including:
+Docs in this repository should avoid inventing runtime capabilities, including:
 - API endpoints
 - database schemas
 - UI routes
 - deployment contracts
-- SDK behavior
+- product-domain entities
 
 ## Source Of Truth
 
 Use these pages first:
 - `docs/product-direction.md`
 - `docs/specs/active/product-realignment-phase-1.md`
-- `docs/specs/active/practitioner-runtime-bootstrap-v1.md`
+- `docs/runbooks/agent-mode.md`
 
-Treat inherited files under `specs/`, `openspec/`, and archived docs/specs as historical
-reference only.
+Treat inherited or archived product-specific material as historical reference
+only.

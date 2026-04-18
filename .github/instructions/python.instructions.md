@@ -40,7 +40,7 @@ applyTo: "**/*.py"
 - Minimum 80% line + branch coverage on new code.
 
 ## Observability
-- Use the standard library logger patterns already present in `src/biomechanics_ai/`.
+- Use the standard library logger patterns already present in `src/`.
 - No `print()` statements in production code.
 - Include relevant IDs and context in logs when available.
 - Never log passwords, tokens, or PII.

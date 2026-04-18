@@ -1,15 +1,15 @@
 # Skill: API Contract Review
 
-**Scope:** All collector REST API endpoints (`src/biomechanics_ai/collector/`) and their TypeScript counterparts (`frontend/src/api/`, `frontend/src/types/`).
+**Scope:** All checked-in backend API endpoints under `src/` and their TypeScript counterparts under `frontend/src/api/` and `frontend/src/types/`.
 
-**Purpose:** Ensure the API contract between the collector and the dashboard is consistent, stable, and well-documented.
+**Purpose:** Ensure the API contract between the backend and frontend is consistent, stable, and well-documented.
 
 ---
 
 ## Checklist
 
 ### Endpoint inventory
-For each endpoint in `collector/server.py`, verify:
+For each checked-in endpoint, verify:
 - [ ] The endpoint is documented in `docs/architecture.md` (method, path, purpose).
 - [ ] A corresponding TypeScript type exists in `frontend/src/types/`.
 - [ ] A fetch helper exists in `frontend/src/api/`.
@@ -44,14 +44,9 @@ For each endpoint in `collector/server.py`, verify:
 ## How to run
 
 ```bash
-# Start the collector
-uvicorn biomechanics_ai.collector.server:app --host 127.0.0.1 --port 4318
-
-# View the auto-generated OpenAPI schema
-curl http://127.0.0.1:4318/openapi.json | python -m json.tool
-
-# Or browse the interactive docs
-open http://127.0.0.1:4318/docs
+Start the checked-in backend entry point if one exists, then compare its
+OpenAPI output against `docs/architecture.md` and the TypeScript types in
+`frontend/src/types/`.
 ```
 
 Compare the OpenAPI output against `docs/architecture.md` and the TypeScript types in `frontend/src/types/`.
@@ -60,4 +55,5 @@ Compare the OpenAPI output against `docs/architecture.md` and the TypeScript typ
 
 ## Expected output
 
-Every endpoint is documented, has a typed Pydantic response model, and has a matching TypeScript interface. No undocumented breaking changes. All endpoint unit tests pass.
+Every endpoint is documented, has a typed response model, and has a matching
+TypeScript interface. No undocumented breaking changes remain.

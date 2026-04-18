@@ -2,8 +2,8 @@
 
 ## What You Can Do In This Snapshot
 
-This repository snapshot is currently best treated as a product-direction, planning, and
-agent-workflow workspace for baseball-biomechanics-ai.
+This repository snapshot is best treated as a documentation, planning, and
+agent-workflow workspace for a generic application scaffold.
 
 A practical contributor quickstart is:
 1. Read `README.md`.
@@ -14,7 +14,7 @@ A practical contributor quickstart is:
 
 ## What You Cannot Reliably Do Here Yet
 
-This snapshot does not contain the verified backend or frontend runtime trees, so you
+This snapshot does not contain a verified backend or frontend runtime, so you
 cannot currently rely on it for:
 - starting the application
 - running the product UI
@@ -31,6 +31,6 @@ When updating docs or plans:
 ## Next Restoration Milestones
 
 The next meaningful repo restoration steps are:
-1. restore the real backend and frontend application trees
-2. align tests and deployment assets to those restored surfaces
-3. replace inherited placeholder contracts with validated biomechanics contracts
+1. define the concrete application domain this scaffold should support
+2. restore or add backend and frontend runtime code only after that scope is chosen
+3. align tests, deployment assets, and docs to those restored surfaces

@@ -22,9 +22,9 @@ This is not the default entry point for normal work.
 # What you do
 
 ## Python
-- Extract duplicated logic to shared modules under `src/biomechanics_ai/` when the behavior is truly reusable.
+- Extract duplicated logic to shared modules under `src/` when the behavior is truly reusable.
 - Split large services into smaller, single-responsibility classes.
-- Move direct DB access out of collector route files into `storage/` or dedicated service helpers when that matches the local pattern.
+- Move direct DB access out of route files into `storage/` or dedicated service helpers when that matches the local pattern.
 - Add missing type hints on public functions.
 - Add missing docstrings on public functions and classes.
 - Replace `Optional[X]` with `X | None`.

@@ -32,11 +32,11 @@ This phase is successful when:
 ## Requirements
 
 ### Functional
-- [x] Review and fix the `bandit` findings in `src/biomechanics_ai/execution/ssh_target.py`.
+- [x] Review and fix the `bandit` findings in `src/execution/ssh_target.py`.
 - [x] Use host-key verification that is secure by default for SSH execution.
 - [x] Quote or otherwise constrain remote shell command construction for SSH execution.
 - [x] Avoid hardcoded insecure remote temp-path handling in the SSH target.
-- [x] Review the dynamic `exec` usage in `src/biomechanics_ai/execution/pipeline_definition_runner.py` and choose the smallest defensible mitigation.
+- [x] Review the dynamic `exec` usage in `src/execution/pipeline_definition_runner.py` and choose the smallest defensible mitigation.
 - [x] Add regression tests for the SSH target behavior changes.
 
 ### Non-functional
@@ -49,8 +49,8 @@ This phase is successful when:
 
 ## Affected components
 - `docs/specs/done/agent-runtime-hardening-phase-6.md`
-- `src/biomechanics_ai/execution/pipeline_definition_runner.py`
-- `src/biomechanics_ai/execution/ssh_target.py`
+- `src/execution/pipeline_definition_runner.py`
+- `src/execution/ssh_target.py`
 - `tests/unit/test_pipeline_definition_runner.py`
 - `tests/unit/test_ssh_target.py`
 - `docs/runbooks/agent-mode.md` if workflow guidance changes

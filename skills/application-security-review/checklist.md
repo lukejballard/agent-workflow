@@ -59,7 +59,7 @@ bandit -r src/ -c pyproject.toml -ll
 ## 7. CORS and network exposure
 
 - [ ] `ALLOWED_ORIGINS` env var controls CORS; no wildcard `*` in production configuration.
-- [ ] The collector's `/ingest` and `/metrics` endpoints are not intended to be publicly reachable; document the expected network boundary in `docs/deployment.md`.
+- [ ] Sensitive ingest and metrics endpoints are not intended to be publicly reachable; document the expected network boundary in the active architecture or operations docs when those runtime surfaces exist.
 - [ ] Health endpoints (`/health`) return only `{"status": "ok"}` — no version strings, dependency lists, or internal paths.
 - [ ] Prometheus `/metrics` endpoint is not exposed outside the internal cluster network.
 

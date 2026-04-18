@@ -17,15 +17,15 @@ tests/
 
 ## Naming conventions
 
-- File: `test_<module_name>.py` (matching `src/pipeline_observe/<module>/`).
-- Function: `test_<unit>_<condition>_<expected>` (e.g. `test_anomaly_detector_high_stddev_raises_alert`).
+- File: `test_<module_name>.py` (matching the runtime module when one exists under `src/`).
+- Function: `test_<unit>_<condition>_<expected>`.
 - Fixture: descriptive noun (`db_session`, `mock_client`, `sample_run`).
 
 ---
 
 ## Agent rules
 
-1. **New module = new test file.** Every new `src/pipeline_observe/` module must have a corresponding `tests/unit/test_<module>.py`.
+1. **New module = new test file.** Every new module under `src/` should have a corresponding `tests/unit/test_<module>.py` when runtime code exists.
 2. **Pure unit tests must not touch I/O.** If a test needs a database, use an in-memory SQLite URL via a fixture. If it needs HTTP, use `httpx.MockTransport`.
 3. **Do not modify existing tests** to make your new code pass — fix the code instead.
 4. **Mark integration tests.** Any test that requires a real service must be decorated with `@pytest.mark.integration`.
@@ -42,7 +42,7 @@ Fixtures are defined in the test file itself or in `conftest.py` at the relevant
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from pipeline_observe.storage.models import Base
+from app.storage.models import Base
 
 @pytest.fixture
 def db_session():
@@ -67,10 +67,10 @@ pytest tests/unit/ -v
 pytest tests/integration/ -v -m integration
 
 # With coverage
-pytest tests/unit/ --cov=src/pipeline_observe --cov-report=term-missing
+pytest tests/unit/ --cov=src --cov-report=term-missing
 
 # Single test file
-pytest tests/unit/test_anomaly_detection.py -v
+pytest tests/unit/test_example_module.py -v
 ```
 
 ---

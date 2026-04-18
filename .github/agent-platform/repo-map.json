@@ -3,8 +3,8 @@
   "canonical": true,
   "description": "Canonical repository topology, scoped-guide, and verification metadata for large-codebase agent work.",
   "repository": {
-    "name": "baseball-biomechanics-ai",
-    "summary": "Baseball biomechanics application with a Python/FastAPI backend, React/Vite dashboard, shared tests, docs, and deploy assets."
+    "name": "agent-workflow",
+    "summary": "Reusable repository scaffold for agent-driven software delivery with docs, workflow metadata, helper scripts, and optional runtime areas."
   },
   "defaultReadOrder": [
     "AGENTS.md",
@@ -27,8 +27,8 @@
       "guide": "AGENTS.md"
     },
     {
-      "path": "src/biomechanics_ai/",
-      "role": "Python backend, collector, SDK, storage, analysis, and execution code",
+      "path": "src/",
+      "role": "Backend or shared application code when present",
       "guide": "src/AGENTS.md"
     },
     {
@@ -47,16 +47,6 @@
       "guide": "docs/AGENTS.md"
     },
     {
-      "path": "deploy/",
-      "role": "Deployment manifests and operational assets",
-      "guide": "AGENTS.md"
-    },
-    {
-      "path": "openspec/",
-      "role": "Brownfield change proposals",
-      "guide": "AGENTS.md"
-    },
-    {
       "path": ".specify/",
       "role": "Greenfield planning artifacts",
       "guide": "AGENTS.md"
@@ -64,7 +54,7 @@
   ],
   "domainSurfaces": [
     {
-      "path": "src/biomechanics_ai/",
+      "path": "src/",
       "kind": "backend",
       "guide": "src/AGENTS.md",
       "instructions": [
@@ -75,74 +65,17 @@
         ".github/instructions/performance.instructions.md"
       ],
       "highRiskPaths": [
-        "src/biomechanics_ai/sdk/",
-        "src/biomechanics_ai/collector/",
-        "src/biomechanics_ai/storage/"
+        "src/api/",
+        "src/services/",
+        "src/storage/"
       ],
       "notes": [
-        "Collector routes should stay thin.",
+        "Route and handler modules should stay thin.",
         "Analysis code should stay pure and free of database I/O.",
-        "SDK changes must never break user pipelines on telemetry failure."
+        "Do not document runtime surfaces that are not present in the workspace."
       ],
       "tests": [
         "tests/"
-      ],
-      "knownSubpaths": [
-        {
-          "path": "src/biomechanics_ai/sdk/",
-          "role": "User-facing telemetry SDK"
-        },
-        {
-          "path": "src/biomechanics_ai/collector/",
-          "role": "FastAPI app, routes, and startup"
-        },
-        {
-          "path": "src/biomechanics_ai/storage/",
-          "role": "SQLAlchemy models and session factory"
-        },
-        {
-          "path": "src/biomechanics_ai/analysis/",
-          "role": "Pure analysis functions"
-        },
-        {
-          "path": "src/biomechanics_ai/alerts/",
-          "role": "Webhook-based alert manager"
-        },
-        {
-          "path": "src/biomechanics_ai/cli/",
-          "role": "Typer CLI entry points and terminal UX"
-        },
-        {
-          "path": "src/biomechanics_ai/observability/",
-          "role": "OTel traces and Prometheus metrics"
-        },
-        {
-          "path": "src/biomechanics_ai/plugins/",
-          "role": "Plugin protocol, built-in plugins, and registry"
-        },
-        {
-          "path": "src/biomechanics_ai/workers/",
-          "role": "Background task utilities"
-        },
-        {
-          "path": "src/biomechanics_ai/config/",
-          "role": "Environment-driven configuration"
-        },
-        {
-          "path": "src/biomechanics_ai/models/",
-          "role": "Shared request and response models"
-        },
-        {
-          "path": "src/biomechanics_ai/dashboard/",
-          "role": "Dashboard service entry point if present"
-        },
-        {
-          "path": "src/biomechanics_ai/execution/",
-          "role": "Pipeline execution helpers if present"
-        }
-      ],
-      "observedAdditionalPaths": [
-        "src/biomechanics_ai/services/"
       ]
     },
     {
@@ -169,36 +102,6 @@
       "tests": [
         "frontend/src/__tests__/",
         "frontend/tests/"
-      ],
-      "knownSubpaths": [
-        {
-          "path": "frontend/src/api/",
-          "role": "Typed collector API helpers"
-        },
-        {
-          "path": "frontend/src/components/",
-          "role": "Shared and reusable UI components"
-        },
-        {
-          "path": "frontend/src/context/",
-          "role": "React context providers"
-        },
-        {
-          "path": "frontend/src/hooks/",
-          "role": "Custom hooks for data loading and derived state"
-        },
-        {
-          "path": "frontend/src/pages/",
-          "role": "Top-level page components mounted by the router"
-        },
-        {
-          "path": "frontend/src/types/",
-          "role": "Shared TypeScript interfaces mirroring API responses"
-        },
-        {
-          "path": "frontend/src/__tests__/",
-          "role": "Vitest unit and component tests"
-        }
       ]
     },
     {
@@ -252,17 +155,14 @@
   "changeRouting": [
     {
       "whenPathMatches": [
-        "src/biomechanics_ai/**"
+        "src/**"
       ],
       "readBeforeEditing": [
         "AGENTS.md",
         "src/AGENTS.md",
         ".github/agent-platform/repo-map.json"
       ],
-      "verifyWith": [
-        "pytest tests/ -v",
-        "pytest tests/unit/ --cov=src/biomechanics_ai --cov-report=term-missing"
-      ]
+      "verifyWith": []
     },
     {
       "whenPathMatches": [
@@ -273,10 +173,7 @@
         "frontend/AGENTS.md",
         ".github/agent-platform/repo-map.json"
       ],
-      "verifyWith": [
-        "cd frontend && npm run typecheck",
-        "cd frontend && npm run test"
-      ]
+      "verifyWith": []
     },
     {
       "whenPathMatches": [
@@ -287,9 +184,7 @@
         "tests/AGENTS.md",
         ".github/agent-platform/repo-map.json"
       ],
-      "verifyWith": [
-        "pytest tests/ -v"
-      ]
+      "verifyWith": []
     },
     {
       "whenPathMatches": [
@@ -319,14 +214,8 @@
     }
   ],
   "verificationRoutes": {
-    "backend": [
-      "pytest tests/ -v",
-      "pytest tests/unit/ --cov=src/biomechanics_ai --cov-report=term-missing"
-    ],
-    "frontend": [
-      "cd frontend && npm run typecheck",
-      "cd frontend && npm run test"
-    ],
+    "backend": [],
+    "frontend": [],
     "contracts": [],
     "agentPlatform": [
       "python scripts/agent/sync_agent_platform.py --check"

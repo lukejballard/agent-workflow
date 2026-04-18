@@ -1,5 +1,5 @@
 ---
-applyTo: "src/biomechanics_ai/storage/**,alembic/**,src/biomechanics_ai/collector/db.py,src/biomechanics_ai/collector/*service*.py"
+applyTo: "src/**/storage/**,alembic/**,src/**/*service*.py,src/**/db.py"
 ---
 
 # Database standards
@@ -11,12 +11,12 @@ applyTo: "src/biomechanics_ai/storage/**,alembic/**,src/biomechanics_ai/collecto
 - Never drop a column or table in the same migration that removes all code references to it.
 
 ## Naming conventions
-- Match the existing table, column, and index naming already present in `src/biomechanics_ai/storage/`.
+- Match the existing table, column, and index naming already present in the owning storage module.
 - Do not normalize unrelated tables or key types opportunistically during a feature change.
 
 ## Storage patterns
 - Keep database access in `storage/` or in dedicated service helpers that already own that query path.
-- Collector route files should not grow ad hoc SQL or session-management logic.
+- Route files should not grow ad hoc SQL or session-management logic.
 - Match the existing SQLAlchemy 2 declarative and session patterns used in `storage/metadata.py` and related model files.
 - Preserve SQLite-default and PostgreSQL-production compatibility.
 

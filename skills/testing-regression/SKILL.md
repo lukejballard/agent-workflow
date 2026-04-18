@@ -20,19 +20,13 @@
 - [ ] No `XPASS` (unexpectedly passing) tests — investigate if one appears.
 
 ### Coverage
-- [ ] `pytest tests/unit/ --cov=src/biomechanics_ai --cov-report=term-missing` shows ≥80% line coverage for any changed module.
+- [ ] `pytest tests/unit/ --cov=src --cov-report=term-missing` shows ≥80% line coverage for any changed module.
 - [ ] Coverage has not decreased compared to the base branch.
 
 ### Regression signals
-After any change, verify the following are still green:
-- [ ] `test_alert_manager.py` — alert webhook dispatch logic.
-- [ ] `test_anomaly_detection.py` — baseline and threshold logic.
-- [ ] `test_dag_builder.py` — DAG edge derivation.
-- [ ] `test_schema_drift.py` — drift detection (NEW/DROPPED/CHANGED).
-- [ ] `test_lineage_builder.py` — column lineage edge construction.
-- [ ] `test_api_decorator.py` — `@observe_step` decorator behaviour.
-- [ ] `test_dashboard_api.py` — REST API endpoint responses.
-- [ ] `test_plugin_system.py` — plugin hook lifecycle.
+After any change, verify the most relevant tests for the changed area are still
+green. Keep the regression focus tied to the modules that actually exist in the
+repository.
 
 ### New tests
 - [ ] Every new module has a corresponding test file.
@@ -48,7 +42,7 @@ After any change, verify the following are still green:
 pytest tests/unit/ -v
 
 # With coverage
-pytest tests/unit/ --cov=src/biomechanics_ai --cov-report=term-missing
+pytest tests/unit/ --cov=src --cov-report=term-missing
 
 # Integration tests (requires docker compose up -d)
 pytest tests/integration/ -v -m integration

@@ -9,123 +9,99 @@
 ---
 
 ## Problem
-This repository still contains a large amount of inherited planning and documentation
-written for a pipeline-observability product. The actual stated purpose of this repo
-is to help baseball players improve biomechanics and support better prescription
-workflows, but the public docs, specs, and planning assets do not consistently say
-that. The mismatch misleads contributors, creates false implementation assumptions,
-and makes it unclear which assets are authoritative.
+This repository still contains a large amount of inherited planning,
+documentation, automation, and metadata written for specific product identities.
+The public surfaces currently mix generic workflow-governance guidance with old
+pipeline-observability and other domain-specific language. That mismatch makes the
+repo harder to reuse, misleads contributors about what is actually implemented,
+and leaves stale scripts, tasks, and CI steps pointing at code that is not in the
+workspace.
 
-A second issue is that the current workspace snapshot does not contain the expected
-runtime trees under `src/` or `frontend/`. That means product language and helper
-surfaces can be aligned now, but end-to-end runtime migration cannot be completed
-inside this workspace unless those trees are restored.
-
-Git history inspection on 2026-04-14 confirmed that the missing runtime trees are not
-present in the repository history currently available in this workspace. Runtime
-restoration therefore requires an external source or a new aligned implementation,
-not a simple local checkout from this repository.
+The current verified state is more limited and more general: this checkout is a
+workflow-heavy scaffold with specs, prompts, skills, instructions, and helper
+scripts, not a validated concrete application runtime. The cleanup therefore
+needs to remove or generalize repo-specific files and wording until the public
+surface matches that reality.
 
 ## Success criteria
-- Top-level contributor and product docs describe the repo as a baseball biomechanics
-  application, not a pipeline-observability platform.
-- Inherited pipeline-era specs and planning artifacts are either rewritten at the
-  summary level or explicitly marked as archival/non-authoritative.
-- Repo-visible scripts, workflow assets, and helper paths use `biomechanics_ai`
-  naming consistently.
-- The docs stop claiming runnable backend/frontend surfaces that are not present in
-  the current workspace snapshot.
+- Top-level contributor docs describe the repo as a generic scaffold for
+      agent-assisted software delivery.
+- Public docs, active specs, tasks, CI, and helper scripts no longer depend on
+      stale product-specific wording or dead runtime paths.
+- Clearly inherited product-only files are removed, renamed, or archived behind
+      generic replacements.
+- Repo metadata is generated from generic source definitions rather than old
+      product names.
 
 ---
 
 ## Requirements
 
 ### Functional
-- [ ] Update top-level docs to reflect the baseball biomechanics product direction.
-- [ ] Add a current source of truth for contributors describing the verified repo
-      state and the intended product direction.
-- [ ] Mark inherited planning/spec artifacts as archival where their detailed
-      pipeline-oriented behavior cannot be validated.
-- [ ] Align repo-visible package names, image names, script references, and env var
-      names with `biomechanics_ai` where those files exist in this workspace.
-- [ ] Record that runtime migration is blocked until real `src/biomechanics_ai/`
-      and `frontend/` trees exist in the workspace.
+- [ ] Update top-level docs to describe the repository as a generic scaffold.
+- [ ] Replace or remove active specs and placeholder pages whose file names or
+      contents are tied to a specific inherited product.
+- [ ] Remove dead product-only helper scripts that point at non-existent runtime code.
+- [ ] Generalize repo metadata, tasks, and CI so they match the verified workspace shape.
+- [ ] Keep archival material clearly separated from active contributor guidance.
 
 ### Non-functional
 - [ ] Documentation honesty: no doc should claim validated runtime behavior that is
       not present in the workspace.
 - [ ] Traceability: all edits should point back to this active spec or the explicit
       user request.
-- [ ] Regression safety: preserve historical artifacts where useful, but clearly mark
-      them as non-authoritative instead of silently deleting context.
-- [ ] Maintainability: new docs should direct future contributors toward the active
-      spec and product-direction summary instead of scattering disclaimers.
+- [ ] Regression safety: preserve generic workflow guidance while removing stale,
+      misleading product assumptions.
+- [ ] Maintainability: the source metadata generator should produce the same public
+      wording as the checked-in generated artifacts.
 
 ---
 
 ## Affected components
-- `README.md`
 - `docs/architecture.md`
 - `docs/architecture/README.md`
 - `docs/quickstart.md`
 - `docs/ci-cd.md`
-- `docs/cli-reference.md`
-- `docs/deployment.md`
-- `docs/sdk-reference.md`
-- `docs/pipeline-studio.md`
-- `docs/monitors-as-code.md`
-- `docs/integrations/*.md`
-- `docs/images/*.md`
-- `docs/implementation-wave-1-top5.md`
-- `plan/*`
-- `specs/*`
-- `openspec/changes/*`
-- `docs/specs/active/*` and `docs/specs/done/*` where inherited pipeline wording is
-  still presented as current product truth
-- `docs/specs/active/practitioner-session-review-and-prescription-v1.md`
-- `specs/005-athlete-session-domain-foundation/`
-- `specs/006-practitioner-assessment-workspace/`
-- `specs/007-prescription-delivery-and-followup/`
-- `openspec/changes/practitioner-assessment-workflow/`
+- `docs/product-direction.md`
+- `docs/runbooks/agent-mode.md`
+- non-workflow documentation pages and placeholders previously kept under `docs/`
+- `docs/specs/active/product-realignment-phase-1.md`
+- product-specific and non-workflow active specs under `docs/specs/active/`
+- non-workflow historical specs under `docs/specs/done/`
+- root and scoped `AGENTS.md` files
+- repo metadata under `.github/agent-platform/`
+- agent-platform source generation under `scripts/agent/`
+- `.github/workflows/ci.yml`
+- `.vscode/tasks.json`
 - repo-visible helper scripts under `scripts/`
 
 ---
 
 ## External context
-No external research is required. The governing inputs are the explicit user request,
-current repository contents, and the verified absence of runtime trees under `src/`
-and `frontend/` in this workspace snapshot.
+No external research is required. The governing inputs are the explicit user
+request and the current repository contents.
 
 ---
 
 ## Documentation impact
 This change directly updates the public contributor and planning surfaces listed
-above. It also establishes two new anchor docs:
-- `docs/product-direction.md` for current product language
-- `docs/specs/active/product-realignment-phase-1.md` for implementation traceability
+above so they present a generic, reusable repository shape.
 
 ## API changes
-None in this phase. This work does not introduce or modify validated runtime API
-contracts because the corresponding runtime surfaces are not present in the current
-workspace snapshot.
+None. This work only changes docs, metadata, and helper automation.
 
 ## Data model changes
-None in this phase. No database schema, storage model, or persisted runtime data shape
-is changed by this realignment work.
+None.
 
 ---
 
 ## Architecture plan
-1. Create one verified product-direction document that states what the repo is, what
-   is present today, and what is currently absent.
-2. Rewrite top-level docs that currently overclaim runtime behavior so they instead
-   reflect the verified repo state and future biomechanics direction.
-3. Add archival notes to inherited pipeline-era specs and planning artifacts rather
-   than letting them continue as silent defaults.
-4. Align helper scripts and workflow assets that still use stale package or env-var
-   names, limited to files present in this workspace.
-5. Stop short of runtime code migration because the expected runtime trees are not
-      available here or in current repository history.
+1. Rewrite the entry-point docs to describe the repo as a generic workflow and
+      governance scaffold.
+2. Replace or remove active files whose names or contents are tied to inherited
+      product identities.
+3. Update tasks, CI, and generated metadata so they validate only what exists.
+4. Remove dead scripts that refer to missing runtime modules.
 
 ---
 
@@ -133,10 +109,9 @@ is changed by this realignment work.
 
 | Edge case | Handling |
 |---|---|
-| A legacy spec still contains pipeline-era detail after the rewrite | Add a clear archival note at the top and point to this active spec |
-| Contributors expect runnable backend commands from docs | Replace those commands with current-state guidance unless the target files exist |
-| Runtime trees appear later in another workspace snapshot | Treat this phase as documentation and visible-tooling alignment only; perform runtime migration in a follow-up spec |
-| A contributor assumes the missing runtime trees can be restored from local git history | Document that current repository history does not contain those trees and that external restoration is required |
+| A legacy spec still contains product-specific detail after the rewrite | Replace it with a generic equivalent or delete it if it only preserves stale assumptions |
+| Contributors expect runnable backend commands from docs or CI | Replace those commands with metadata and repo-hygiene checks unless the target files exist |
+| A future project chooses a concrete product domain | Reintroduce narrow terminology only in the files backed by actual runtime code and current specs |
 
 ---
 
@@ -144,43 +119,33 @@ is changed by this realignment work.
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Overwriting useful historical context | Medium | Medium | Preserve files but mark them archival instead of deleting them outright |
-| Inventing biomechanics behavior not backed by code | High | High | Use high-level product language only and avoid unverified implementation details |
-| Contributors miss the new source of truth | Medium | Medium | Link `docs/product-direction.md` from README and top-level docs |
+| Removing useful historical context | Medium | Medium | Keep generic workflow guidance and delete only files that are dead or misleading |
+| Leaving one source generator stale after updating generated files | Medium | High | Update `scripts/agent/sync_agent_platform.py` and the generated metadata together |
+| Missing hidden product-specific references in secondary docs | Medium | Medium | Run targeted searches after the edit pass and clean remaining public surfaces |
 
 ---
 
 ## Breaking changes
-This is a documentation and workflow-asset realignment. It does not intentionally
-change validated runtime behavior. Some legacy helper commands are removed or
-reframed where they referenced missing runtime surfaces.
+This is a documentation and workflow-asset realignment. It does not introduce
+runtime behavior, but it does remove dead scripts and stale task references.
 
 ## Rollback plan
-If any rewritten documentation proves too aggressive, revert the affected doc or spec
-files as a content-only change. No data migration or runtime rollback procedure is
-required because this phase does not modify validated application code or storage.
+If any rewritten documentation proves too aggressive, revert the affected doc or
+metadata files as a content-only change. No runtime rollback is required.
 
 ---
 
 ## Testing strategy
-- **Unit:** not applicable for documentation-only surfaces.
-- **Integration:** validate agent-platform metadata and check edited scripts for
-  diagnostics.
-- **Documentation:** run targeted searches for stale product identifiers and stale
-  pipeline-platform framing in top-level docs.
-- **Regression:** verify that workflow docs still point to existing files and
-  directories.
+- **Unit:** not applicable.
+- **Integration:** validate agent-platform metadata generation and CI/task references.
+- **Documentation:** run targeted searches for stale product identifiers in active and public-facing files.
+- **Regression:** verify that key docs still point to existing files and directories.
 
 ---
 
 ## Acceptance criteria
-- [ ] README and top-level docs use baseball biomechanics language.
-- [ ] Product-direction doc exists and is linked from key entry points.
-- [ ] Inherited pipeline-era planning/spec files are clearly marked archival or
-      refreshed at the summary level.
-- [ ] No remaining references to the retired legacy product identifier remain in the
-      workspace.
-- [ ] Runtime-tree absence is documented explicitly rather than hidden.
-- [ ] Runtime restoration blocker is documented as an external-source requirement rather than a local git recovery task.
-- [ ] Verification summary distinguishes completed alignment from blocked runtime
-      migration.
+- [ ] Top-level docs describe a generic workflow-governance scaffold.
+- [ ] Product-specific active specs and placeholder pages are removed or generalized.
+- [ ] Dead product-only scripts are removed.
+- [ ] CI, tasks, and generated metadata no longer point at missing runtime code.
+- [ ] Verification confirms the main public surfaces are free of inherited product naming.

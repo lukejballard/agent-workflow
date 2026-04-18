@@ -4,9 +4,11 @@ This file is the primary context document for all AI agents working in this
 repository. Read it completely before taking any action.
 
 ## What this repo is
-A production fullstack application.
-Stack: Python/FastAPI backend in `src/biomechanics_ai/`, React + TypeScript dashboard in
-`frontend/`, shared tests in `tests/`, docs in `docs/`, and deployment assets in `deploy/`.
+A reusable repository scaffold for agent-driven fullstack delivery.
+The verified surfaces in this snapshot are workflow metadata, documentation,
+specs, prompts, skills, and helper scripts. Project-specific application code
+may live under `src/`, `frontend/`, `tests/`, and `deploy/` when those areas
+are populated.
 
 ## How the agent system works
 
@@ -76,11 +78,11 @@ When external docs or standards materially affect the approach, save a reusable 
 ## Where things live
 
 ```
-frontend/                     React + TypeScript + Vite dashboard
-src/biomechanics_ai/         Python backend, SDK, collector, storage, analysis
-tests/                        Python unit and integration tests
-docs/                         Architecture, setup, and feature docs
-deploy/                       Kubernetes, Helm, Prometheus, and deployment assets
+frontend/                     Frontend application area and scoped agent guidance
+src/                          Backend or shared application code area and scoped guidance
+tests/                        Automated tests and test-specific guidance
+docs/                         Architecture, setup, workflow, and planning docs
+deploy/                       Deployment manifests and operational assets when present
 .specify/                     Speckit templates and scripts for greenfield feature planning
 openspec/                     OpenSpec change proposals for brownfield capability evolution
 

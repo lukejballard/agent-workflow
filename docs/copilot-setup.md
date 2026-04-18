@@ -22,7 +22,7 @@ This guide explains the GitHub Copilot and coding agent files available in this 
 
 ## 1. Overview
 
-baseball-biomechanics-ai uses a layered approach to guide AI coding assistants:
+This repository uses a layered approach to guide AI coding assistants:
 
 ```
 .github/copilot-instructions.md              ← Always-on: project context + global rules
@@ -125,7 +125,7 @@ These files are activated automatically when Copilot is working on files that ma
 |---|---|---|
 | `accessibility.instructions.md` | `frontend/**` | Semantic HTML, ARIA, contrast, keyboard support |
 | `api.instructions.md` | collector routes, API models, `frontend/src/api/**` | API boundaries and typed client access |
-| `database.instructions.md` | `src/biomechanics_ai/storage/**`, `alembic/**` | Schema changes, query safety, migration hygiene |
+| `database.instructions.md` | `src/**/storage/**`, `alembic/**` | Schema changes, query safety, migration hygiene |
 | `performance.instructions.md` | `**/*.py`, `**/*.ts`, `**/*.tsx` | Profiling-first performance work, hot-path awareness |
 | `python.instructions.md` | `**/*.py` | Collector, storage, analysis, SDK, typing, testing, error handling |
 | `react.instructions.md` | `frontend/**` | SPA component boundaries, hooks, data flow, accessibility |
@@ -338,8 +338,8 @@ These examples are copy-paste starting points for the default orchestrator.
 ```text
 Use the default orchestrator workflow for this backend task.
 
-Goal: add or change collector behavior under src/biomechanics_ai/.
-Target area: src/biomechanics_ai/collector/
+Goal: add or change backend behavior under src/.
+Target area: src/
 Context: read AGENTS.md, src/AGENTS.md, docs/architecture.md, and any governing spec in `.specify/`, specs/, plan/, openspec/changes/, or docs/specs/active/.
 Constraints: keep collector routes thin, keep storage access in storage/ or service helpers, and update docs/architecture.md if an endpoint changes.
 Done when: the spec is current, the code change is implemented, tests are updated, and the final response includes key risks and verification status.

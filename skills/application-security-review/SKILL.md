@@ -1,8 +1,8 @@
 # Skill: Application Security Review
 
-**Scope:** `src/biomechanics_ai/`, `frontend/src/`, `Dockerfile*`, `docker-compose*.yml`, `.github/workflows/`
+**Scope:** `src/`, `frontend/src/`, `Dockerfile*`, `docker-compose*.yml`, `.github/workflows/`
 
-**Purpose:** Identify and remediate security risks in baseball-biomechanics-ai before a release or after any change that touches authentication, data handling, external I/O, or infrastructure configuration.
+**Purpose:** Identify and remediate security risks before a release or after any change that touches authentication, data handling, external I/O, or infrastructure configuration.
 
 **When to invoke:**
 - Before any production release.

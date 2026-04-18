@@ -1,14 +1,14 @@
 ---
-applyTo: "src/biomechanics_ai/collector/**,src/biomechanics_ai/models/**,frontend/src/api/**"
+applyTo: "src/**,frontend/src/api/**"
 ---
 
-# Collector and API client standards
+# API client and route standards
 
-## Collector route design
-- Match the existing collector route families and prefixes in neighboring files.
+## Route design
+- Match the existing route families and prefixes in neighboring files.
 - Do not introduce `/v1/` versioning or a brand-new top-level route style unless the spec requires it.
 - Keep route modules thin: validate input, call service/storage helpers, and shape responses.
-- Reuse or add Pydantic models in `src/biomechanics_ai/models/` or the local route module when small.
+- Reuse or add Pydantic models in `src/` or the local route module when small.
 - Preserve special response modes where required, including `text/plain` and `text/event-stream`.
 
 ## HTTP status codes
@@ -26,12 +26,13 @@ applyTo: "src/biomechanics_ai/collector/**,src/biomechanics_ai/models/**,fronten
 
 ## Endpoint behavior
 - Use nouns for resources and match the naming style already used in nearby collector routes.
+- Use nouns for resources and match the naming style already used in nearby route modules.
 - For list endpoints, filtering and pagination should match the neighboring route family instead of inventing a new shape.
 - New or changed endpoints must be reflected in `docs/architecture.md`.
 - Never expose stack traces or raw internal exceptions in API responses.
 
 ## Auth
-- Follow the existing collector auth and middleware patterns for authenticated endpoints.
+- Follow the existing auth and middleware patterns for authenticated endpoints.
 - Return `401` when authentication is missing or invalid and `403` when it is valid but insufficient.
 
 ## Frontend API clients

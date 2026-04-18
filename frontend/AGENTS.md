@@ -1,6 +1,6 @@
 # AGENTS.md — frontend/
 
-This file provides agent guidance scoped to the **React TypeScript dashboard** (`frontend/`).
+This file provides agent guidance scoped to the **React TypeScript frontend** (`frontend/`).
 
 ---
 
@@ -20,7 +20,7 @@ This file provides agent guidance scoped to the **React TypeScript dashboard** (
 
 ```
 frontend/src/
-  api/          ← Collector REST API fetch helpers; one file per resource group
+  api/          ← Application API fetch helpers; one file per resource group
   components/   ← Shared/reusable UI components
   context/      ← React Context providers
   hooks/        ← Custom hooks (data fetching, derived state)
@@ -33,7 +33,7 @@ frontend/src/
 
 ## Agent rules
 
-- **Never call the collector API from inside a component**. All data fetching goes through hooks in `hooks/` or context in `context/`.
+- **Never call the API directly from inside a component**. All data fetching goes through hooks in `hooks/` or context in `context/`.
 - **Type everything**. All API response shapes must have a corresponding interface in `types/`.
 - **Keep pages thin**. Pages compose components and hooks — they do not contain business logic.
 - **Accessibility first**. Every interactive element needs an accessible label. Run the browser's a11y checker before marking work done.
