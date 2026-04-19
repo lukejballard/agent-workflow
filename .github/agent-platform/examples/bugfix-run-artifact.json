@@ -9,6 +9,7 @@
     "docs/specs/research/agent-architecture-benchmark-research.md"
   ],
   "status": "done",
+  "confidence": 0.90,
   "summary": "The PR quality workflow was rewritten cleanly and re-read to confirm the specific active-spec gate and no-spec exemption logic remained intact.",
   "assumptions": [
     "The malformed workflow edit was isolated to the PR quality gate and did not affect unrelated CI jobs."

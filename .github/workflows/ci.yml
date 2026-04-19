@@ -30,3 +30,9 @@ jobs:
       - name: Naming hygiene
         run: |
           ! grep -RInE --exclude=ci.yml "baseball[-]biomechanics[-]ai|pipeline[-]observe|pipeline[_]observe|practitioner[-]runtime[-]bootstrap[-]v1|practitioner[-]session[-]review[-]and[-]prescription[-]v1|biomechanics[-]ai[-]video[-]vertical[-]slice[-]v1|dashboard[-]zero[-]pipeline[-]empty[-]state|docs/pipeline[-]studio[.]md" AGENTS.md docs/architecture.md docs/product-direction.md docs/quickstart.md docs/runbooks docs/integrations docs/images .github/agents .github/instructions .github/agent-platform scripts/agent .vscode frontend/AGENTS.md src/AGENTS.md tests/AGENTS.md .specify/memory/constitution.md skills
+
+      - name: SAST (semgrep)
+        if: hashFiles('src/**/*.py') != ''
+        run: |
+          pip install semgrep --quiet
+          semgrep --config .semgrep.yml src/ --error

@@ -68,6 +68,15 @@ if $BACKEND; then
 
   echo "=== Backend: unit tests ==="
   "$PYTHON_BIN" -m pytest "$PYTHON_TESTS_PATH/unit/" -v --tb=short -q
+
+  # SAST: only runs when src/ contains Python files and semgrep is installed
+  if command -v semgrep >/dev/null 2>&1; then
+    PY_COUNT=$(find "$REPO_ROOT/src" -name "*.py" 2>/dev/null | wc -l)
+    if [[ "$PY_COUNT" -gt 0 ]]; then
+      echo "=== Backend: semgrep SAST ==="
+      semgrep --config "$REPO_ROOT/.semgrep.yml" "$REPO_ROOT/src/" --error
+    fi
+  fi
 fi
 
 if $FRONTEND; then

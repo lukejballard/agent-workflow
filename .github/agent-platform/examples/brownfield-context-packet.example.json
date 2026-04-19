@@ -1,6 +1,7 @@
 {
   "schemaVersion": 2,
   "classification": "brownfield-improvement",
+  "current_phase": "execute-or-answer",
   "goal": "Implement phase 2 of the repository's agent context-engineering architecture using the existing single-entry orchestrator.",
   "constraints": [
     "Keep the rollout incremental and compatible with the existing single-entry orchestrator.",
@@ -32,6 +33,7 @@
     "output_contract": "A richer packet contract, active run-artifact policy, a concrete brownfield example pair, and passing validation.",
     "done_condition": "The validator accepts the richer packet and the new brownfield examples, and the default workflow docs describe the same behavior.",
     "route": "tool:edit",
+    "confidence": 0.80,
     "evidence_refs": [
       "docs/specs/done/agent-context-engineering-phase-1.md",
       ".github/agent-platform/context-packet.schema.json",

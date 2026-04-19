@@ -162,7 +162,10 @@
         "src/AGENTS.md",
         ".github/agent-platform/repo-map.json"
       ],
-      "verifyWith": []
+      "verifyWith": [
+        "ruff check src/",
+        "python -m mypy src/"
+      ]
     },
     {
       "whenPathMatches": [
@@ -184,7 +187,10 @@
         "tests/AGENTS.md",
         ".github/agent-platform/repo-map.json"
       ],
-      "verifyWith": []
+      "verifyWith": [
+        "ruff check src/",
+        "python -m mypy src/"
+      ]
     },
     {
       "whenPathMatches": [
@@ -214,9 +220,14 @@
     }
   ],
   "verificationRoutes": {
-    "backend": [],
+    "backend": [
+      "ruff check src/",
+      "python -m mypy src/"
+    ],
     "frontend": [],
-    "contracts": [],
+    "contracts": [
+      "python scripts/agent/sync_agent_platform.py --check"
+    ],
     "agentPlatform": [
       "python scripts/agent/sync_agent_platform.py --check"
     ]

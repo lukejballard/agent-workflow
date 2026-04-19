@@ -1,6 +1,7 @@
 {
   "schemaVersion": 2,
   "classification": "brownfield-improvement",
+  "current_phase": "execute-or-answer",
   "goal": "Harden the repository's agent architecture with typed context packets and bounded context management.",
   "constraints": [
     "Keep the rollout incremental and testable in isolation.",
@@ -25,6 +26,7 @@
     "output_contract": "Updated schemas, manifest policy, and validator support for the context packet plus task ledger.",
     "done_condition": "The new packet artifact, examples, and validator all align and the prompt layer can reference them.",
     "route": "tool:edit",
+    "confidence": 0.85,
     "evidence_refs": [
       ".github/agent-platform/workflow-manifest.json",
       ".github/agent-platform/context-packet.schema.json",

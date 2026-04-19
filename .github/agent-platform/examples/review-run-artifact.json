@@ -10,6 +10,7 @@
     "docs/specs/research/vercel-labs-agent-skills-research.md"
   ],
   "status": "done",
+  "confidence": 0.92,
   "summary": "The review focused on whether the new metadata files, refresh tooling, and docs stay aligned and remain explicit about current platform limits.",
   "assumptions": [
     "The repository continues to use the single-entry orchestrator as the primary workflow surface."

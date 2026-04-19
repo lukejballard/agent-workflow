@@ -6,7 +6,8 @@
   "objective": "Operationalize the agent context packet by activating real run artifacts for longer workflows and recording hydrated repo-memory sources in the current-step contract.",
   "linkedSpec": "docs/specs/done/agent-context-engineering-phase-2.md",
   "status": "done",
-  "summary": "The default workflow now treats run artifacts as active for longer multi-surface tasks, the packet records hydrated semantic-memory sources, and the repo contains a concrete brownfield packet plus run-artifact pair that validate together.",
+  "confidence": 0.88,
+  "summary": "Run-artifact policy is now active for longer multi-surface tasks, the packet records hydrated semantic-memory sources, and the repo contains a concrete brownfield packet plus run-artifact pair that validate together.",
   "assumptions": [
     "Editor-managed memory scopes can be referenced by metadata even when they are not exposed as ordinary workspace files."
   ],

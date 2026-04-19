@@ -28,20 +28,33 @@ Do not send the user through manual agent handoffs unless they explicitly ask fo
 specialist-only behavior.
 
 # Before doing anything
+
+Context loading is **progressive**. Load only what the current phase requires.
+
+## Phase 0 — Bootstrap (always, every task)
 1. Read `AGENTS.md` at the repo root.
-2. Read `.github/copilot-instructions.md`.
-3. Read `.github/agent-platform/workflow-manifest.json` for the canonical task classes, capability routing, approval categories, skill triggers, and linked platform artifacts.
-4. Read `.github/agent-platform/repo-map.json` for canonical repository topology, scoped guides, and verification routes.
-5. Read `.github/agent-platform/skill-registry.json` for the canonical skill inventory and trigger-tag coverage.
-6. Read any active spec in `docs/specs/active/` that applies to the task.
-7. Check for existing requirement sources in `specs/`, `.specify/`, `plan/`, and `openspec/changes/`.
-8. Read every relevant `.github/instructions/*.instructions.md` file for the paths you will touch.
-9. Read the nearest scoped `AGENTS.md` for the target area:
-  - `src/AGENTS.md` for Python backend work
-  - `frontend/AGENTS.md` for dashboard work
-  - `tests/AGENTS.md` for test work
-  - `docs/AGENTS.md` for documentation work
-10. If the task is release-sensitive or domain-specific, consult the relevant checklist in `skills/` or `.github/skills/`.
+2. Read `.github/agent-platform/workflow-manifest.json` — for task classes, model router, capability routing, approval categories, skill triggers, and `changeRouting` surface map.
+
+## Phase 1 — Classify, then load for the classified surface
+After classifying the request (see Workflow Phase 1), load the surface-specific files listed in `workflow-manifest.json → changeRouting.readBeforeEditing` for the areas you will touch. Do **not** load files for surfaces you will not touch.
+
+Additionally load:
+3. `.github/agent-platform/repo-map.json` — for non-trivial tasks (skip for trivial answers).
+4. `.github/agent-platform/skill-registry.json` — only if the classified task has trigger tags; skip for trivial tasks.
+5. `.github/copilot-instructions.md` — if modifying `.github/agent-platform/`, agents, prompts, or governance files.
+
+## Phase 2 — Requirements and spec loading (non-trivial tasks only)
+6. Read any active spec in `docs/specs/active/` that matches the task slug.
+7. Check for existing requirement sources in `specs/`, `.specify/`, `plan/`, and `openspec/changes/` — load only if a matching artifact exists.
+
+## Phase 3 — Release-gate and domain skills (when applicable)
+8. If the task is release-sensitive or domain-specific, consult the relevant checklist in `skills/` or `.github/skills/`.
+
+**Surface routing examples** (derived from `changeRouting.readBeforeEditing`):
+- Editing `src/` → load `src/AGENTS.md` + `python.instructions.md` + `api.instructions.md`
+- Editing `frontend/` → load `frontend/AGENTS.md` + `react.instructions.md` + `typescript.instructions.md`
+- Editing `tests/` → load `tests/AGENTS.md` + `testing.instructions.md`
+- Editing `.github/agents/` → load `.github/copilot-instructions.md` + root `AGENTS.md`
 
 # Codebase-aware routing
 - `src/` is the backend or shared application code area when runtime code is present.
@@ -131,15 +144,35 @@ Use the task router to assign each atomic node to the lightest viable path: tool
 inline execution, or specialist-agent pattern when context isolation is helpful.
 
 ## Phase 6 — Adversarial critique
-Treat the first plan or answer as suspect.
-Use the `adversarial-review` skill for medium- or high-risk work.
-Challenge:
-- missing requirements or unstated assumptions
-- simpler or safer alternatives
-- edge cases and failure modes
-- regression and coupling risk
-- security, accessibility, performance, observability, and testing gaps
-- whether the requested solution solves the real problem
+
+**Risk classification gate** — before critiquing, assign a risk level:
+
+| Level | Criteria |
+|---|---|
+| **low** | read-only, docs-only, or trivial one-liner with no adjacent risk |
+| **medium** | modifies logic, tests, configs, or a single surface area |
+| **high** | modifies security/auth/storage/API, multi-surface, or release-gated |
+
+**For low-risk work**: run an inline self-critique using the checklist below. No subagent needed.
+
+**For medium- or high-risk work**: invoke `runSubagent("reviewer")` and pass:
+- the full task description
+- the plan or diff being reviewed
+- the relevant spec slug if one exists
+- the risk level
+
+The reviewer subagent returns a structured verdict: **PASS** or **REJECT**.
+
+- If **PASS**: proceed to Phase 7.
+- If **REJECT**: record the rejection reasons in the run artifact, revise per Phase 7, then re-invoke the reviewer. Allow at most **two** critique-and-revise cycles. If still REJECT after two passes, pause and surface the blocker to the user before continuing.
+
+**Inline self-critique checklist** (used for low-risk or when reviewer subagent is unavailable):
+- Missing requirements or unstated assumptions
+- Simpler or safer alternatives
+- Edge cases and failure modes
+- Regression and coupling risk
+- Security, accessibility, performance, observability, and testing gaps
+- Whether the requested solution solves the real problem
 
 ## Phase 7 — Revise
 Revise the plan or implementation after critique.

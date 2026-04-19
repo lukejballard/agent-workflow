@@ -1,7 +1,20 @@
 import json
+import os
 import re
 import sys
+from pathlib import Path
 from typing import Any
+
+# ---------------------------------------------------------------------------
+# Tool call limit
+# The hook tracks cumulative tool calls in a per-session file. Once the limit
+# is reached the hook emits "ask" (not "deny") so the user can decide whether
+# to extend the session. Override via AGENT_MAX_TOOL_CALLS env var.
+# ---------------------------------------------------------------------------
+MAX_TOOL_CALLS = int(os.environ.get("AGENT_MAX_TOOL_CALLS", "50"))
+
+# Session budget file path — shared with token_budget.py.
+_SESSION_FILE = os.environ.get("AGENT_SESSION_FILE", "/tmp/agent-budget.json")
 
 DENY_COMMAND_PATTERNS = [
     (
@@ -98,6 +111,68 @@ TERMINAL_TOOL_NAMES = {
     "run_in_terminal",
     "terminal",
 }
+
+
+def _read_session_file() -> dict[str, Any]:
+    try:
+        return json.loads(Path(_SESSION_FILE).read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _write_session_file(data: dict[str, Any]) -> None:
+    path = Path(_SESSION_FILE)
+    tmp = path.with_suffix(".tmp")
+    try:
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.replace(path)
+    except OSError:
+        # Non-fatal: if we can't write the session file, we continue rather
+        # than blocking every tool call.
+        pass
+
+
+def check_and_increment_tool_call() -> tuple[bool, int]:
+    """Increment the tool call counter and return (limit_reached, new_count).
+
+    Returns (True, count) if MAX_TOOL_CALLS has been reached.
+    """
+    data = _read_session_file()
+    count = int(data.get("tool_call_count", 0)) + 1
+    data["tool_call_count"] = count
+    _write_session_file(data)
+    return count >= MAX_TOOL_CALLS, count
+
+
+def _read_session_file() -> dict[str, Any]:
+    try:
+        return json.loads(Path(_SESSION_FILE).read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _write_session_file(data: dict[str, Any]) -> None:
+    path = Path(_SESSION_FILE)
+    tmp = path.with_suffix(".tmp")
+    try:
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.replace(path)
+    except OSError:
+        # Non-fatal: if we can't write the session file, we continue rather
+        # than blocking every tool call.
+        pass
+
+
+def check_and_increment_tool_call() -> tuple[bool, int]:
+    """Increment the tool call counter and return (limit_reached, new_count).
+
+    Returns (True, count) if MAX_TOOL_CALLS has been reached.
+    """
+    data = _read_session_file()
+    count = int(data.get("tool_call_count", 0)) + 1
+    data["tool_call_count"] = count
+    _write_session_file(data)
+    return count >= MAX_TOOL_CALLS, count
 
 
 def emit_pretool_decision(
@@ -202,6 +277,23 @@ def main() -> int:
     if not isinstance(tool_input, dict):
         tool_input = {}
 
+    # --- Gate 1: tool call limit ---
+    limit_reached, call_count = check_and_increment_tool_call()
+    if limit_reached:
+        emit_pretool_decision(
+            "ask",
+            f"Tool call limit reached ({call_count}/{MAX_TOOL_CALLS}). "
+            "Continuing may indicate an agent retry loop. "
+            "Please review progress and confirm whether to continue.",
+            additional_context=(
+                "Override the limit by setting AGENT_MAX_TOOL_CALLS env var. "
+                "If this is a genuinely large task, increase the limit rather than "
+                "dismissing the warning without review."
+            ),
+        )
+        return 0
+
+    # --- Gate 2: remote write tools ---
     if handle_remote_write_tool(tool_name):
         return 0
 

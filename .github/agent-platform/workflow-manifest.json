@@ -37,6 +37,85 @@
       "docs-only"
     ]
   },
+  "modelRouter": {
+    "description": "Guidance for selecting the appropriate model tier for each task class. The orchestrator reads this section after Phase 1 classification and routes accordingly. Tier labels are advisory; use the best available model in the tier.",
+    "defaultModel": "auto",
+    "taskClassRoutes": {
+      "trivial": {
+        "tier": "fast",
+        "rationale": "No deep reasoning required; use the fastest available model."
+      },
+      "research-only": {
+        "tier": "standard",
+        "rationale": "External context loading is the bottleneck, not reasoning depth."
+      },
+      "review-only": {
+        "tier": "reasoning",
+        "rationale": "Adversarial review quality scales with reasoning capability."
+      },
+      "brownfield-improvement": {
+        "tier": "reasoning",
+        "rationale": "Multi-surface analysis and tradeoff evaluation benefit from full reasoning."
+      },
+      "greenfield-feature": {
+        "tier": "reasoning",
+        "rationale": "Spec creation and architecture decisions require full reasoning."
+      },
+      "implement-from-existing-spec": {
+        "tier": "standard",
+        "rationale": "Implementation from a locked spec is execution-heavy, not reasoning-heavy."
+      },
+      "test-only": {
+        "tier": "standard",
+        "rationale": "Test generation from existing code uses pattern recognition more than deep reasoning."
+      },
+      "docs-only": {
+        "tier": "fast",
+        "rationale": "Documentation updates are language quality tasks, not reasoning tasks."
+      }
+    },
+    "confidenceThresholds": {
+      "escalateBelow": 0.6,
+      "abortBelow": 0.3
+    },
+    "maxToolCallsPerTask": 50
+  },
+  "changeRouting": {
+    "description": "Maps repository surfaces to the files that must be read before editing them. Used for progressive context loading: load only what the classified surface requires.",
+    "readBeforeEditing": {
+      "src/": [
+        "src/AGENTS.md",
+        ".github/instructions/python.instructions.md",
+        ".github/instructions/api.instructions.md",
+        ".github/instructions/security.instructions.md",
+        ".github/instructions/performance.instructions.md"
+      ],
+      "frontend/": [
+        "frontend/AGENTS.md",
+        ".github/instructions/react.instructions.md",
+        ".github/instructions/typescript.instructions.md",
+        ".github/instructions/accessibility.instructions.md",
+        ".github/instructions/performance.instructions.md"
+      ],
+      "tests/": [
+        "tests/AGENTS.md",
+        ".github/instructions/testing.instructions.md"
+      ],
+      "docs/": [
+        "docs/AGENTS.md"
+      ],
+      ".github/agent-platform/": [
+        ".github/copilot-instructions.md"
+      ],
+      ".github/agents/": [
+        ".github/copilot-instructions.md",
+        "AGENTS.md"
+      ],
+      "scripts/agent/": [
+        ".github/instructions/python.instructions.md"
+      ]
+    }
+  },
   "contextEngineering": {
     "packetSchema": ".github/agent-platform/context-packet.schema.json",
     "goalAnchorPolicy": "Re-inject the one-line top-level goal at the top of every non-trivial LLM call.",
@@ -395,6 +474,77 @@
       "path": ".github/skills/adr/SKILL.md",
       "triggers": [
         "architectural-decision"
+      ]
+    },
+    "api-contract-review": {
+      "path": "skills/api-contract-review/SKILL.md",
+      "triggers": [
+        "api",
+        "api-change",
+        "contract",
+        "openapi",
+        "release-sensitive"
+      ]
+    },
+    "application-security-review": {
+      "path": "skills/application-security-review/SKILL.md",
+      "triggers": [
+        "security",
+        "auth",
+        "high-risk",
+        "owasp"
+      ]
+    },
+    "docker-deploy-validation": {
+      "path": "skills/docker-deploy-validation/SKILL.md",
+      "triggers": [
+        "deploy",
+        "docker",
+        "container",
+        "release-sensitive"
+      ]
+    },
+    "docs-release-readiness": {
+      "path": "skills/docs-release-readiness/SKILL.md",
+      "triggers": [
+        "release",
+        "release-sensitive",
+        "docs-change"
+      ]
+    },
+    "frontend-accessibility": {
+      "path": "skills/frontend-accessibility/SKILL.md",
+      "triggers": [
+        "frontend",
+        "accessibility",
+        "a11y",
+        "user-facing-ui"
+      ]
+    },
+    "python-quality": {
+      "path": "skills/python-quality/SKILL.md",
+      "triggers": [
+        "python",
+        "backend",
+        "pre-pr"
+      ]
+    },
+    "telemetry-observability-audit": {
+      "path": "skills/telemetry-observability-audit/SKILL.md",
+      "triggers": [
+        "observability",
+        "telemetry",
+        "runtime",
+        "api"
+      ]
+    },
+    "testing-regression": {
+      "path": "skills/testing-regression/SKILL.md",
+      "triggers": [
+        "regression-sensitive",
+        "test-only",
+        "brownfield",
+        "pre-pr"
       ]
     }
   },

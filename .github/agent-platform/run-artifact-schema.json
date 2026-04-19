@@ -62,12 +62,20 @@
         "in-progress",
         "blocked",
         "review-needed",
-        "done"
+        "done",
+        "aborted",
+        "failed"
       ]
     },
     "summary": {
       "type": "string",
       "minLength": 1
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Overall task confidence. <0.6 should trigger human escalation; <0.3 should trigger abort."
     },
     "assumptions": {
       "type": "array",
@@ -210,7 +218,8 @@
               "passed",
               "failed",
               "not-run",
-              "advisory"
+              "advisory",
+              "contract-broken"
             ]
           },
           "details": {

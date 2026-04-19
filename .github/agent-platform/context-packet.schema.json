@@ -9,8 +9,10 @@
     "classification",
     "goal",
     "constraints",
+    "current_phase",
     "completed_steps",
     "current_step",
+    "task_graph",
     "available_tools",
     "working_memory",
     "episodic_memory",
@@ -27,6 +29,24 @@
     "classification": {
       "type": "string",
       "minLength": 1
+    },
+    "current_phase": {
+      "type": "string",
+      "enum": [
+        "goal-anchor",
+        "classify",
+        "breadth-scan",
+        "depth-dive",
+        "lock-requirements",
+        "choose-approach",
+        "adversarial-critique",
+        "revise",
+        "execute-or-answer",
+        "traceability-and-verify",
+        "aborted",
+        "escalated"
+      ],
+      "description": "Current phase in the workflow state machine. Must be a valid phase from workflow-manifest.json phaseOrder."
     },
     "goal": {
       "type": "string",
@@ -115,6 +135,12 @@
           "type": "string",
           "minLength": 1
         },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Self-assessed confidence in this step's output. <0.6 triggers escalation signal; <0.3 triggers abort."
+        },
         "evidence_refs": {
           "type": "array",
           "items": {
@@ -202,7 +228,9 @@
           "items": {
             "type": "string",
             "minLength": 1
-          }
+          },
+          "maxItems": 10,
+          "description": "Scoped to the current subtask only. Must be cleared at the start of each new current_step."
         },
         "stale_data_policy": {
           "type": "string",
@@ -417,6 +445,15 @@
     "self_check": {
       "type": "string",
       "minLength": 1
+    },
+    "allowed_paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Glob patterns for filesystem paths this task is permitted to modify. Edits outside these paths require explicit scope-expansion approval. Set during classify phase.",
+      "uniqueItems": true
     }
   }
 }

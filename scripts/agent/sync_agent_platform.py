@@ -194,6 +194,7 @@ RUN_ARTIFACT_ALLOWED_FIELDS = {
     "linkedSpec",
     "linkedResearch",
     "status",
+    "confidence",
     "summary",
     "assumptions",
     "touchedPaths",
@@ -224,6 +225,7 @@ CONTEXT_PACKET_ALLOWED_FIELDS = {
     "constraints",
     "completed_steps",
     "current_step",
+    "current_phase",
     "task_graph",
     "available_tools",
     "working_memory",
@@ -232,6 +234,7 @@ CONTEXT_PACKET_ALLOWED_FIELDS = {
     "run_artifact",
     "context_health",
     "self_check",
+    "allowed_paths",
 }
 CONTEXT_PACKET_RUN_ARTIFACT_FIELDS = {
     "mode",
@@ -331,15 +334,19 @@ def build_skill_registry(
         )
 
     skill_dir = repo_root / ".github" / "skills"
-    actual_skill_ids = sorted(
+    github_skill_ids = sorted(
         child.name
         for child in skill_dir.iterdir()
         if child.is_dir() and (child / "SKILL.md").exists()
     )
-    manifest_skill_ids = list(manifest_skills.keys())
-    if sorted(manifest_skill_ids) != actual_skill_ids:
+    manifest_skill_ids = set(manifest_skills.keys())
+    # All .github/skills/ directories must be covered by the manifest.
+    # Additional entries (e.g. from root skills/) are allowed.
+    missing_from_manifest = sorted(set(github_skill_ids) - manifest_skill_ids)
+    if missing_from_manifest:
         raise AgentPlatformValidationError(
-            "workflow-manifest.json skills do not match the actual .github/skills/ directories"
+            "workflow-manifest.json is missing skill entries that exist in "
+            f".github/skills/: {', '.join(missing_from_manifest)}"
         )
 
     registry_skills: list[dict[str, Any]] = []
@@ -433,6 +440,7 @@ def build_domain_surface(
 
 def build_backend_verification_routes(repo_root: Path) -> list[str]:
     routes: list[str] = []
+    # Dynamic routes derived from discovered test layout
     if existing_relative_file(repo_root, "tests/unit") or existing_relative_file(
         repo_root, "tests/integration"
     ):
@@ -441,11 +449,20 @@ def build_backend_verification_routes(repo_root: Path) -> list[str]:
         routes.append(
             "pytest tests/unit/ --cov=src --cov-report=term-missing"
         )
+    # Static fallback routes: always applicable when src/ is present
+    if existing_relative_file(repo_root, "src"):
+        routes.append("ruff check src/")
+        routes.append("python -m mypy src/")
     return routes
 
 
 def build_frontend_verification_routes(repo_root: Path) -> list[str]:
     routes: list[str] = []
+    # Only include npm routes when frontend/package.json actually exists;
+    # the frontend/ dir may be a scaffold-only placeholder.
+    package_json = repo_root / "frontend" / "package.json"
+    if not package_json.is_file():
+        return routes
     scripts = load_frontend_scripts(repo_root)
     for script_name in ("lint", "typecheck", "test", "test:e2e"):
         if script_name in scripts:
@@ -459,6 +476,11 @@ def build_contract_verification_routes(repo_root: Path) -> list[str]:
     for target_name in ("validate-specs", "test-contract"):
         if target_name in make_targets:
             routes.append(f"make {target_name}")
+    # Static fallback: schema validation is always available
+    if not routes and existing_relative_file(repo_root, ".github/agent-platform"):
+        routes.append(
+            "python scripts/agent/sync_agent_platform.py --check"
+        )
     return routes
 
 
@@ -888,7 +910,7 @@ def validate_context_packet_example(
     if unknown_fields:
         errors.append(f"{label} contains unknown fields: {', '.join(unknown_fields)}")
 
-    required_fields = CONTEXT_PACKET_ALLOWED_FIELDS - {"task_graph"}
+    required_fields = CONTEXT_PACKET_ALLOWED_FIELDS - {"task_graph", "allowed_paths"}
     missing_fields = sorted(field for field in required_fields if field not in packet)
     if missing_fields:
         errors.append(

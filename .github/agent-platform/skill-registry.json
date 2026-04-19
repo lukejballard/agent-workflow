@@ -158,6 +158,101 @@
       "triggerTags": [
         "architectural-decision"
       ]
+    },
+    {
+      "id": "api-contract-review",
+      "displayName": "Api Contract Review",
+      "path": "skills/api-contract-review/SKILL.md",
+      "artifactType": "skill-markdown",
+      "triggerTags": [
+        "api",
+        "api-change",
+        "contract",
+        "openapi",
+        "release-sensitive"
+      ]
+    },
+    {
+      "id": "application-security-review",
+      "displayName": "Application Security Review",
+      "path": "skills/application-security-review/SKILL.md",
+      "artifactType": "skill-markdown",
+      "triggerTags": [
+        "security",
+        "auth",
+        "high-risk",
+        "owasp"
+      ]
+    },
+    {
+      "id": "docker-deploy-validation",
+      "displayName": "Docker Deploy Validation",
+      "path": "skills/docker-deploy-validation/SKILL.md",
+      "artifactType": "skill-markdown",
+      "triggerTags": [
+        "deploy",
+        "docker",
+        "container",
+        "release-sensitive"
+      ]
+    },
+    {
+      "id": "docs-release-readiness",
+      "displayName": "Docs Release Readiness",
+      "path": "skills/docs-release-readiness/SKILL.md",
+      "artifactType": "skill-markdown",
+      "triggerTags": [
+        "release",
+        "release-sensitive",
+        "docs-change"
+      ]
+    },
+    {
+      "id": "frontend-accessibility",
+      "displayName": "Frontend Accessibility",
+      "path": "skills/frontend-accessibility/SKILL.md",
+      "artifactType": "skill-markdown",
+      "triggerTags": [
+        "frontend",
+        "accessibility",
+        "a11y",
+        "user-facing-ui"
+      ]
+    },
+    {
+      "id": "python-quality",
+      "displayName": "Python Quality",
+      "path": "skills/python-quality/SKILL.md",
+      "artifactType": "skill-markdown",
+      "triggerTags": [
+        "python",
+        "backend",
+        "pre-pr"
+      ]
+    },
+    {
+      "id": "telemetry-observability-audit",
+      "displayName": "Telemetry Observability Audit",
+      "path": "skills/telemetry-observability-audit/SKILL.md",
+      "artifactType": "skill-markdown",
+      "triggerTags": [
+        "observability",
+        "telemetry",
+        "runtime",
+        "api"
+      ]
+    },
+    {
+      "id": "testing-regression",
+      "displayName": "Testing Regression",
+      "path": "skills/testing-regression/SKILL.md",
+      "artifactType": "skill-markdown",
+      "triggerTags": [
+        "regression-sensitive",
+        "test-only",
+        "brownfield",
+        "pre-pr"
+      ]
     }
   ],
   "triggerIndex": {
@@ -181,11 +276,13 @@
       "adversarial-review"
     ],
     "high-risk": [
-      "adversarial-review"
+      "adversarial-review",
+      "application-security-review"
     ],
     "brownfield": [
       "test-hardening",
-      "regression-audit"
+      "regression-audit",
+      "testing-regression"
     ],
     "bugfix": [
       "test-hardening",
@@ -193,7 +290,8 @@
       "debug-timeline-capture"
     ],
     "regression-sensitive": [
-      "test-hardening"
+      "test-hardening",
+      "testing-regression"
     ],
     "refactor": [
       "regression-audit"
@@ -209,23 +307,28 @@
     ],
     "frontend": [
       "frontend-best-practices",
-      "visual-qa"
+      "visual-qa",
+      "frontend-accessibility"
     ],
     "react": [
       "frontend-best-practices"
     ],
     "user-facing-ui": [
       "frontend-best-practices",
-      "visual-qa"
+      "visual-qa",
+      "frontend-accessibility"
     ],
     "visual-change": [
       "visual-qa"
     ],
     "api": [
-      "observability-inject"
+      "observability-inject",
+      "api-contract-review",
+      "telemetry-observability-audit"
     ],
     "auth": [
-      "observability-inject"
+      "observability-inject",
+      "application-security-review"
     ],
     "storage": [
       "observability-inject"
@@ -234,7 +337,8 @@
       "observability-inject"
     ],
     "runtime": [
-      "observability-inject"
+      "observability-inject",
+      "telemetry-observability-audit"
     ],
     "workflow-change": [
       "documentation-audit"
@@ -252,7 +356,8 @@
       "documentation-audit"
     ],
     "docs-change": [
-      "documentation-audit"
+      "documentation-audit",
+      "docs-release-readiness"
     ],
     "ambiguous-subtask": [
       "sequential-thinking-guardrails"
@@ -270,13 +375,68 @@
       "sequential-thinking-guardrails"
     ],
     "release-sensitive": [
-      "continuous-audit"
+      "continuous-audit",
+      "api-contract-review",
+      "docker-deploy-validation",
+      "docs-release-readiness"
     ],
     "repo-health-audit": [
       "continuous-audit"
     ],
     "architectural-decision": [
       "adr"
+    ],
+    "api-change": [
+      "api-contract-review"
+    ],
+    "contract": [
+      "api-contract-review"
+    ],
+    "openapi": [
+      "api-contract-review"
+    ],
+    "security": [
+      "application-security-review"
+    ],
+    "owasp": [
+      "application-security-review"
+    ],
+    "deploy": [
+      "docker-deploy-validation"
+    ],
+    "docker": [
+      "docker-deploy-validation"
+    ],
+    "container": [
+      "docker-deploy-validation"
+    ],
+    "release": [
+      "docs-release-readiness"
+    ],
+    "accessibility": [
+      "frontend-accessibility"
+    ],
+    "a11y": [
+      "frontend-accessibility"
+    ],
+    "python": [
+      "python-quality"
+    ],
+    "backend": [
+      "python-quality"
+    ],
+    "pre-pr": [
+      "python-quality",
+      "testing-regression"
+    ],
+    "observability": [
+      "telemetry-observability-audit"
+    ],
+    "telemetry": [
+      "telemetry-observability-audit"
+    ],
+    "test-only": [
+      "testing-regression"
     ]
   }
 }

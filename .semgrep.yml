@@ -1,0 +1,80 @@
+# .semgrep.yml
+# SAST rules for the agent-workflow scaffold.
+# Run: semgrep --config .semgrep.yml src/ scripts/
+#
+# Covers OWASP Top 10 surface area present in this codebase:
+#   - A03 Injection (shell injection via subprocess)
+#   - A05 Security Misconfiguration (debug/hardcoded secrets)
+#   - A09 Logging failures (bare exception swallowing)
+
+rules:
+
+  # -------------------------------------------------------------------------
+  # A03 – Injection: shell=True with untrusted input
+  # -------------------------------------------------------------------------
+  - id: subprocess-shell-true
+    patterns:
+      - pattern: subprocess.$FUNC(..., shell=True, ...)
+    message: >
+      subprocess called with shell=True. Use a list of arguments and
+      shell=False to avoid shell-injection vulnerabilities.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: A03:2021 - Injection
+      cwe: CWE-78
+
+  # -------------------------------------------------------------------------
+  # A03 – Injection: os.system with any argument
+  # -------------------------------------------------------------------------
+  - id: os-system-call
+    pattern: os.system(...)
+    message: >
+      os.system() is unsafe. Prefer subprocess.run() with a list of
+      arguments and shell=False.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: A03:2021 - Injection
+      cwe: CWE-78
+
+  # -------------------------------------------------------------------------
+  # A05 – Hardcoded secret patterns (low-noise heuristic)
+  # -------------------------------------------------------------------------
+  - id: hardcoded-secret-assignment
+    patterns:
+      - pattern: $VAR = "..."
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i)(password|secret|api_key|token|auth_key)
+    message: >
+      Possible hardcoded secret in variable '$VAR'. Use environment
+      variables or a secrets manager instead.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: security
+      owasp: A05:2021 - Security Misconfiguration
+      cwe: CWE-798
+
+  # -------------------------------------------------------------------------
+  # A09 – Logging: bare `except: pass` swallows all errors silently
+  # -------------------------------------------------------------------------
+  - id: bare-except-pass
+    pattern: |
+      try:
+        ...
+      except:
+        pass
+    message: >
+      Bare `except: pass` silently swallows all exceptions, including
+      KeyboardInterrupt and SystemExit. Catch specific exceptions and log
+      or re-raise them.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: reliability
+      owasp: A09:2021 - Security Logging and Monitoring Failures
+      cwe: CWE-390

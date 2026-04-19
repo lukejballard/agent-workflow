@@ -1,5 +1,12 @@
 # AGENTS.md — frontend/
 
+> **STATUS: RESERVED — Runtime code does not yet exist.**
+> Before running any command described here, verify that `frontend/package.json` exists.
+> If it does not, this directory is a scaffold only. Do not attempt `npm ci`, `npm run lint`,
+> `npm run build`, or any other npm command — they will fail. Scaffold the frontend first
+> (create `package.json`, `vite.config.ts`, `tsconfig.json`, and `src/main.tsx`),
+> then verify the stack described below.
+
 This file provides agent guidance scoped to the **React TypeScript frontend** (`frontend/`).
 
 ---
