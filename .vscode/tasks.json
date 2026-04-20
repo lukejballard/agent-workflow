@@ -2,26 +2,6 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Validate Agent Platform Metadata",
-      "type": "shell",
-      "command": "python",
-      "args": [
-        "scripts/agent/sync_agent_platform.py",
-        "--check"
-      ],
-      "isBackground": false
-    },
-    {
-      "label": "Check Node Version",
-      "type": "shell",
-      "command": "node",
-      "args": ["-v"],
-      "presentation": {
-        "reveal": "always"
-      },
-      "isBackground": false
-    },
-    {
       "label": "Show Git Status",
       "type": "shell",
       "command": "git",

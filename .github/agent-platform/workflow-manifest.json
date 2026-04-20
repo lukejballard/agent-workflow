@@ -1,13 +1,7 @@
 {
   "version": 1,
   "canonical": true,
-  "description": "Canonical workflow metadata for the repository's single-entry orchestrator. This file defines task classes, workflow phases, context-engineering policy, capability routing, approval categories, and skill triggers. Agent markdown, prompts, and docs should align with this manifest.",
-  "artifacts": {
-    "repoMap": ".github/agent-platform/repo-map.json",
-    "skillRegistry": ".github/agent-platform/skill-registry.json",
-    "contextPacketSchema": ".github/agent-platform/context-packet.schema.json",
-    "runArtifactSchema": ".github/agent-platform/run-artifact-schema.json"
-  },
+  "description": "Workflow policy kernel for the single hyperintelligent orchestrator. Defines task classes, phase order, requirement locking, memory discipline, retry policy, and verification semantics.",
   "workflow": {
     "phaseOrder": [
       "goal-anchor",
@@ -22,634 +16,81 @@
       "traceability-and-verify"
     ],
     "maxCritiquePasses": 2,
-    "requireSpecFor": [
+    "maxAttemptsPerSubtask": 2,
+    "requireExplicitRequirementsFor": [
       "brownfield-improvement",
       "greenfield-feature",
-      "implement-from-existing-spec",
-      "workflow-change",
-      "architecture-change",
-      "ci-change"
+      "implement-from-existing-spec"
     ],
-    "specUsuallyOptionalFor": [
+    "explicitRequirementLockOptionalFor": [
       "trivial",
       "research-only",
       "review-only",
       "docs-only"
     ]
   },
-  "modelRouter": {
-    "description": "Guidance for selecting the appropriate model tier for each task class. The orchestrator reads this section after Phase 1 classification and routes accordingly. Tier labels are advisory; use the best available model in the tier.",
-    "defaultModel": "auto",
-    "taskClassRoutes": {
-      "trivial": {
-        "tier": "fast",
-        "rationale": "No deep reasoning required; use the fastest available model."
-      },
-      "research-only": {
-        "tier": "standard",
-        "rationale": "External context loading is the bottleneck, not reasoning depth."
-      },
-      "review-only": {
-        "tier": "reasoning",
-        "rationale": "Adversarial review quality scales with reasoning capability."
-      },
-      "brownfield-improvement": {
-        "tier": "reasoning",
-        "rationale": "Multi-surface analysis and tradeoff evaluation benefit from full reasoning."
-      },
-      "greenfield-feature": {
-        "tier": "reasoning",
-        "rationale": "Spec creation and architecture decisions require full reasoning."
-      },
-      "implement-from-existing-spec": {
-        "tier": "standard",
-        "rationale": "Implementation from a locked spec is execution-heavy, not reasoning-heavy."
-      },
-      "test-only": {
-        "tier": "standard",
-        "rationale": "Test generation from existing code uses pattern recognition more than deep reasoning."
-      },
-      "docs-only": {
-        "tier": "fast",
-        "rationale": "Documentation updates are language quality tasks, not reasoning tasks."
-      }
-    },
-    "confidenceThresholds": {
-      "escalateBelow": 0.6,
-      "abortBelow": 0.3
-    },
-    "maxToolCallsPerTask": 50
-  },
-  "changeRouting": {
-    "description": "Maps repository surfaces to the files that must be read before editing them. Used for progressive context loading: load only what the classified surface requires.",
-    "readBeforeEditing": {
-      "src/": [
-        "src/AGENTS.md",
-        ".github/instructions/python.instructions.md",
-        ".github/instructions/api.instructions.md",
-        ".github/instructions/security.instructions.md",
-        ".github/instructions/performance.instructions.md"
-      ],
-      "frontend/": [
-        "frontend/AGENTS.md",
-        ".github/instructions/react.instructions.md",
-        ".github/instructions/typescript.instructions.md",
-        ".github/instructions/accessibility.instructions.md",
-        ".github/instructions/performance.instructions.md"
-      ],
-      "tests/": [
-        "tests/AGENTS.md",
-        ".github/instructions/testing.instructions.md"
-      ],
-      "docs/": [
-        "docs/AGENTS.md"
-      ],
-      ".github/agent-platform/": [
-        ".github/copilot-instructions.md"
-      ],
-      ".github/agents/": [
-        ".github/copilot-instructions.md",
-        "AGENTS.md"
-      ],
-      "scripts/agent/": [
-        ".github/instructions/python.instructions.md"
-      ]
-    }
-  },
-  "contextEngineering": {
-    "packetSchema": ".github/agent-platform/context-packet.schema.json",
-    "goalAnchorPolicy": "Re-inject the one-line top-level goal at the top of every non-trivial LLM call.",
-    "memoryTiers": [
-      "working",
-      "episodic",
-      "semantic"
+  "requirementLock": {
+    "preferredSources": [
+      "repo-spec-or-plan",
+      "issue-or-ticket",
+      "inline-requirements-contract"
     ],
-    "rollingWindow": {
-      "recentTurns": 2,
-      "episodicCompressionRequired": true,
-      "staleToolOutputTtl": "one-subtask"
-    },
-    "healthGate": {
-      "maxContextUtilizationPct": 70,
-      "onThresholdExceeded": [
-        "trim-stale-tool-output",
-        "compress-episode-memory",
-        "retain-goal-anchor-active-constraints-and-current-step-only"
-      ]
-    },
-    "subtaskExecution": {
-      "requireAtomicContracts": true,
-      "maxLlmCallsPerSubtask": 1,
-      "splitIfMultiCall": true,
-      "routeViaTaskRouter": true,
-      "scratchpadScope": "current-subtask-only"
-    },
-    "ambiguousSubtaskPolicy": {
-      "candidateApproachCount": 3,
-      "scoreDimensions": [
-        "correctness",
-        "efficiency",
-        "risk"
-      ],
-      "executeHighestScoreOnly": true
-    },
-    "structuredReasoning": {
-      "toolFamily": "sequential-thinking-optional",
-      "allowedTaskClasses": [
-        "brownfield-improvement",
-        "greenfield-feature",
-        "implement-from-existing-spec",
-        "test-only",
-        "docs-only"
-      ],
-      "useWhen": [
-        "ambiguous-subtask",
-        "complex-plan",
-        "adversarial-critique",
-        "multi-branch-investigation"
-      ],
-      "requiredOutput": "summary-only",
-      "defaultRetention": "context-packet-summary-only",
-      "avoidByDefault": [
-        "export-session",
-        "import-session"
-      ],
-      "clearHistoryPolicy": "clear-before-reuse-and-after-summary-when-prior-state-is-no-longer-needed",
-      "notes": "Sequential Thinking session state is scratch space only and is not durable repo memory or evidence."
-    },
-    "observability": {
-      "taskLedgerField": "taskLedger",
-      "requiredMetrics": [
-        "taskId",
-        "tokensIn",
-        "tokensOut",
-        "contextSizeKb",
-        "contextUtilizationPct",
-        "completionStatus"
-      ]
-    },
-    "memoryHydration": {
-      "scopes": [
-        "repo",
-        "session",
-        "user"
-      ],
-      "defaultScopeOrder": [
-        "repo",
-        "session",
-        "user"
-      ],
-      "loadOnDemandOnly": true,
-      "recordLoadedSourcesInPacket": true,
-      "notes": "Memory scopes may be editor-managed rather than normal repo files; packet metadata records the source without requiring filesystem validation."
-    },
-    "runArtifactPolicy": {
-      "activateForTaskClasses": [
-        "brownfield-improvement",
-        "greenfield-feature",
-        "implement-from-existing-spec",
-        "review-only",
-        "research-only",
-        "test-only",
-        "docs-only"
-      ],
-      "activateWhen": [
-        "multi-surface",
-        "multi-subtask",
-        "evidence-heavy"
-      ],
-      "recordTaskLedgerAfterEachSubtask": true,
-      "allowInMemoryArtifactWhenNoRepoPath": true
+    "requiredFields": [
+      "problem",
+      "behaviors",
+      "constraints",
+      "verification"
+    ]
+  },
+  "memoryPolicy": {
+    "workingMemoryScope": "current-step-only",
+    "episodicCompression": "required-after-completed-step",
+    "durableMemory": {
+      "requireProvenance": true,
+      "preferFreshEvidence": true,
+      "ignoreStaleOrUnverified": true
     }
   },
-  "taskClasses": {
-    "trivial": {
-      "summary": "One-line answers, tiny changes, or direct commands with low ambiguity.",
-      "defaultCapabilities": [
-        "repo-read"
-      ]
-    },
-    "research-only": {
-      "summary": "External or internal research with no code changes.",
-      "defaultCapabilities": [
-        "repo-read",
-        "web-research"
-      ]
-    },
-    "review-only": {
-      "summary": "Independent adversarial review with findings first.",
-      "defaultCapabilities": [
-        "repo-read"
-      ]
-    },
-    "brownfield-improvement": {
-      "summary": "Changes to existing behavior, code quality, reliability, or workflows.",
-      "defaultCapabilities": [
-        "repo-read",
-        "repo-write-local",
-        "structured-reasoning",
-        "terminal-exec",
-        "browser-e2e"
-      ]
-    },
-    "greenfield-feature": {
-      "summary": "New capability or larger new workflow built from explicit requirements.",
-      "defaultCapabilities": [
-        "repo-read",
-        "repo-write-local",
-        "structured-reasoning",
-        "terminal-exec",
-        "browser-e2e",
-        "web-research"
-      ]
-    },
-    "implement-from-existing-spec": {
-      "summary": "Implementation work driven by an approved active spec.",
-      "defaultCapabilities": [
-        "repo-read",
-        "repo-write-local",
-        "structured-reasoning",
-        "terminal-exec",
-        "browser-e2e"
-      ]
-    },
-    "test-only": {
-      "summary": "Focused test generation or hardening pass.",
-      "defaultCapabilities": [
-        "repo-read",
-        "repo-write-local",
-        "structured-reasoning",
-        "terminal-exec",
-        "browser-e2e"
-      ]
-    },
-    "docs-only": {
-      "summary": "Contributor or architecture documentation updates with no product behavior change.",
-      "defaultCapabilities": [
-        "repo-read",
-        "repo-write-local",
-        "structured-reasoning"
-      ]
-    }
-  },
-  "capabilities": {
-    "repo-read": {
-      "description": "Read repository files, branches, commits, and metadata.",
-      "toolFamilies": [
-        "filesystem-read",
-        "github-read"
-      ]
-    },
-    "repo-write-local": {
-      "description": "Create or edit local repository files.",
-      "toolFamilies": [
-        "filesystem-write"
-      ],
-      "approval": "ask-on-sensitive-paths"
-    },
-    "repo-write-remote": {
-      "description": "Mutate remote repository state such as files, pull requests, issues, comments, or workflow runs.",
-      "toolFamilies": [
-        "github-write"
-      ],
-      "approval": "always-ask"
-    },
-    "web-research": {
-      "description": "Fetch external documentation or broader web search when available and configured.",
-      "toolFamilies": [
-        "fetch",
-        "tavily-optional"
-      ]
-    },
-    "structured-reasoning": {
-      "description": "Use Sequential Thinking as a bounded reasoning aid for ambiguous planning, critique, or multi-branch investigations.",
-      "toolFamilies": [
-        "sequential-thinking-optional"
-      ]
-    },
-    "browser-e2e": {
-      "description": "Browser automation, screenshots, traces, and UI verification when an editor/browser tool is available.",
-      "toolFamilies": [
-        "playwright-optional",
-        "browser-tools-optional"
-      ]
-    },
-    "terminal-exec": {
-      "description": "Run local verification commands and targeted scripts.",
-      "toolFamilies": [
-        "terminal"
-      ],
-      "approval": "allow-read-default-ask-high-risk"
-    }
-  },
-  "approval": {
-    "sensitivePaths": [
-      ".github/hooks/",
-      ".github/workflows/",
-      ".github/agent-platform/",
-      "scripts/agent/",
-      ".vscode/settings.json",
-      ".vscode/mcp.json",
-      ".github/copilot-instructions.md",
-      ".env"
+  "recoveryPolicy": {
+    "classifyFailuresAs": [
+      "transient-tool",
+      "transient-environment",
+      "missing-context",
+      "requirements-gap",
+      "unsafe-block",
+      "logic-defect"
     ],
-    "terminalAskCategories": [
-      "network-fetch",
-      "dependency-mutation",
-      "remote-push",
-      "workflow-dispatch",
-      "destructive-cleanup"
+    "retryOnlyWhenStrategyChanges": true,
+    "neverRepeatIdenticalStep": true,
+    "escalateAfterAttempts": 2
+  },
+  "verificationPolicy": {
+    "requireVerificationMatrixFor": [
+      "brownfield-improvement",
+      "greenfield-feature",
+      "implement-from-existing-spec",
+      "test-only"
     ],
-    "remoteWriteAlwaysAsk": true
+    "requireEvidencePerClaim": true,
+    "allowedFinalStates": [
+      "verified",
+      "partially-verified",
+      "blocked"
+    ],
+    "confidenceSignals": [
+      "evidence-density",
+      "verification-depth",
+      "memory-freshness"
+    ]
   },
-  "skills": {
-    "feature-discovery": {
-      "path": ".github/skills/feature-discovery/SKILL.md",
-      "triggers": [
-        "vague-request",
-        "greenfield-discovery"
-      ]
-    },
-    "spec-validation": {
-      "path": ".github/skills/spec-validation/SKILL.md",
-      "triggers": [
-        "spec-created",
-        "spec-updated"
-      ]
-    },
-    "adversarial-review": {
-      "path": ".github/skills/adversarial-review/SKILL.md",
-      "triggers": [
-        "non-trivial",
-        "medium-risk",
-        "high-risk"
-      ]
-    },
-    "requirements-traceability": {
-      "path": ".github/skills/requirements-traceability/SKILL.md",
-      "triggers": [
-        "non-trivial"
-      ]
-    },
-    "test-hardening": {
-      "path": ".github/skills/test-hardening/SKILL.md",
-      "triggers": [
-        "brownfield",
-        "bugfix",
-        "regression-sensitive"
-      ]
-    },
-    "regression-audit": {
-      "path": ".github/skills/regression-audit/SKILL.md",
-      "triggers": [
-        "brownfield",
-        "bugfix",
-        "refactor"
-      ]
-    },
-    "debug-timeline-capture": {
-      "path": ".github/skills/debug-timeline-capture/SKILL.md",
-      "triggers": [
-        "bugfix",
-        "flaky-test",
-        "launch-blocker",
-        "ui-repro"
-      ]
-    },
-    "frontend-best-practices": {
-      "path": ".github/skills/frontend-best-practices/SKILL.md",
-      "triggers": [
-        "frontend",
-        "react",
-        "user-facing-ui"
-      ]
-    },
-    "visual-qa": {
-      "path": ".github/skills/visual-qa/SKILL.md",
-      "triggers": [
-        "frontend",
-        "user-facing-ui",
-        "visual-change"
-      ]
-    },
-    "observability-inject": {
-      "path": ".github/skills/observability-inject/SKILL.md",
-      "triggers": [
-        "api",
-        "auth",
-        "storage",
-        "execution",
-        "runtime"
-      ]
-    },
-    "documentation-audit": {
-      "path": ".github/skills/documentation-audit/SKILL.md",
-      "triggers": [
-        "workflow-change",
-        "architecture-change",
-        "prompt-change",
-        "skill-change",
-        "ci-change",
-        "docs-change"
-      ]
-    },
-    "sequential-thinking-guardrails": {
-      "path": ".github/skills/sequential-thinking-guardrails/SKILL.md",
-      "triggers": [
-        "ambiguous-subtask",
-        "complex-plan",
-        "adversarial-critique",
-        "multi-branch-investigation",
-        "structured-reasoning"
-      ]
-    },
-    "continuous-audit": {
-      "path": ".github/skills/continuous-audit/SKILL.md",
-      "triggers": [
-        "release-sensitive",
-        "repo-health-audit"
-      ]
-    },
-    "adr": {
-      "path": ".github/skills/adr/SKILL.md",
-      "triggers": [
-        "architectural-decision"
-      ]
-    },
-    "api-contract-review": {
-      "path": "skills/api-contract-review/SKILL.md",
-      "triggers": [
-        "api",
-        "api-change",
-        "contract",
-        "openapi",
-        "release-sensitive"
-      ]
-    },
-    "application-security-review": {
-      "path": "skills/application-security-review/SKILL.md",
-      "triggers": [
-        "security",
-        "auth",
-        "high-risk",
-        "owasp"
-      ]
-    },
-    "docker-deploy-validation": {
-      "path": "skills/docker-deploy-validation/SKILL.md",
-      "triggers": [
-        "deploy",
-        "docker",
-        "container",
-        "release-sensitive"
-      ]
-    },
-    "docs-release-readiness": {
-      "path": "skills/docs-release-readiness/SKILL.md",
-      "triggers": [
-        "release",
-        "release-sensitive",
-        "docs-change"
-      ]
-    },
-    "frontend-accessibility": {
-      "path": "skills/frontend-accessibility/SKILL.md",
-      "triggers": [
-        "frontend",
-        "accessibility",
-        "a11y",
-        "user-facing-ui"
-      ]
-    },
-    "python-quality": {
-      "path": "skills/python-quality/SKILL.md",
-      "triggers": [
-        "python",
-        "backend",
-        "pre-pr"
-      ]
-    },
-    "telemetry-observability-audit": {
-      "path": "skills/telemetry-observability-audit/SKILL.md",
-      "triggers": [
-        "observability",
-        "telemetry",
-        "runtime",
-        "api"
-      ]
-    },
-    "testing-regression": {
-      "path": "skills/testing-regression/SKILL.md",
-      "triggers": [
-        "regression-sensitive",
-        "test-only",
-        "brownfield",
-        "pre-pr"
-      ]
-    }
-  },
-  "triggerMatrix": [
-    {
-      "when": [
-        "any-non-trivial-task"
-      ],
-      "apply": [
-        "adversarial-review",
-        "requirements-traceability"
-      ]
-    },
-    {
-      "when": [
-        "spec-created-or-refreshed"
-      ],
-      "apply": [
-        "spec-validation"
-      ]
-    },
-    {
-      "when": [
-        "brownfield",
-        "bugfix",
-        "regression-sensitive"
-      ],
-      "apply": [
-        "test-hardening",
-        "regression-audit",
-        "debug-timeline-capture"
-      ]
-    },
-    {
-      "when": [
-        "frontend",
-        "user-facing-ui"
-      ],
-      "apply": [
-        "frontend-best-practices",
-        "visual-qa"
-      ],
-      "notes": [
-        "Accessibility review remains explicit and is not replaced by frontend-best-practices."
-      ]
-    },
-    {
-      "when": [
-        "api",
-        "auth",
-        "storage",
-        "execution",
-        "runtime"
-      ],
-      "apply": [
-        "observability-inject"
-      ]
-    },
-    {
-      "when": [
-        "workflow",
-        "architecture",
-        "ci",
-        "prompt",
-        "skill",
-        "docs"
-      ],
-      "apply": [
-        "documentation-audit"
-      ]
-    },
-    {
-      "when": [
-        "ambiguous-subtask",
-        "complex-plan",
-        "adversarial-critique",
-        "multi-branch-investigation",
-        "structured-reasoning"
-      ],
-      "apply": [
-        "sequential-thinking-guardrails"
-      ],
-      "notes": [
-        "Retain only summary-level conclusions in the context packet or run artifact and avoid routine import/export use."
-      ]
-    },
-    {
-      "when": [
-        "release-sensitive",
-        "repo-health-audit"
-      ],
-      "apply": [
-        "continuous-audit"
-      ]
-    },
-    {
-      "when": [
-        "external-context"
-      ],
-      "apply": [
-        "research-first"
-      ],
-      "artifacts": [
-        "docs/specs/research/<slug>-research.md"
-      ]
-    }
+  "taskClasses": [
+    "trivial",
+    "research-only",
+    "review-only",
+    "brownfield-improvement",
+    "greenfield-feature",
+    "implement-from-existing-spec",
+    "test-only",
+    "docs-only"
   ]
 }

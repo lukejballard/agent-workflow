@@ -1,5 +1,5 @@
 ---
-applyTo: "frontend/**"
+applyTo: "**/*.html,**/*.tsx,**/*.jsx"
 ---
 
 # Accessibility standards (WCAG 2.1 AA)

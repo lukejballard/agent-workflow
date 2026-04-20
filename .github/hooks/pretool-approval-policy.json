@@ -3,18 +3,18 @@
     "PreToolUse": [
       {
         "type": "command",
-        "windows": "python scripts\\agent\\pretool_approval_policy.py",
-        "linux": "python3 scripts/agent/pretool_approval_policy.py",
-        "osx": "python3 scripts/agent/pretool_approval_policy.py",
+        "windows": "python .github\\hooks\\pretool_approval_policy.py",
+        "linux": "python3 .github/hooks/pretool_approval_policy.py",
+        "osx": "python3 .github/hooks/pretool_approval_policy.py",
         "timeout": 15
       }
     ],
     "PostToolUse": [
       {
         "type": "command",
-        "windows": "python scripts\\agent\\posttool_validator.py",
-        "linux": "python3 scripts/agent/posttool_validator.py",
-        "osx": "python3 scripts/agent/posttool_validator.py",
+        "windows": "python .github\\hooks\\posttool_validator.py",
+        "linux": "python3 .github/hooks/posttool_validator.py",
+        "osx": "python3 .github/hooks/posttool_validator.py",
         "timeout": 5
       }
     ]

@@ -26,7 +26,7 @@ applyTo: "**/*.ts,**/*.tsx"
 ## Modules
 - Do not assume a path alias exists. Use the import style configured by the local tsconfig.
 - Avoid creating barrel files or package boundaries unless the surrounding area already uses them.
-- Keep frontend API shapes aligned with `frontend/src/api/` and `frontend/src/types/`.
+- Keep API shapes aligned with the local client modules and shared type definitions.
 
 ## Error handling
 - Use typed errors: `class DomainError extends Error { constructor(...) }`.

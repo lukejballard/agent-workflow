@@ -1,11 +1,11 @@
 ---
-applyTo: "src/**/storage/**,alembic/**,src/**/*service*.py,src/**/db.py"
+applyTo: "**/storage/**,**/migrations/**,**/*service*.py,**/db.py"
 ---
 
 # Database standards
 
 ## Migrations
-- Every schema change must update the SQLAlchemy models and include an Alembic migration for Postgres compatibility.
+- Every schema change must update the owning models and include a migration when the repo uses migration files.
 - Never alter the production schema manually.
 - Migrations must be reversible when possible. Implement `downgrade()` or document why rollback is not safe.
 - Never drop a column or table in the same migration that removes all code references to it.
@@ -17,8 +17,8 @@ applyTo: "src/**/storage/**,alembic/**,src/**/*service*.py,src/**/db.py"
 ## Storage patterns
 - Keep database access in `storage/` or in dedicated service helpers that already own that query path.
 - Route files should not grow ad hoc SQL or session-management logic.
-- Match the existing SQLAlchemy 2 declarative and session patterns used in `storage/metadata.py` and related model files.
-- Preserve SQLite-default and PostgreSQL-production compatibility.
+- Match the existing ORM and session patterns already used in the repo.
+- Preserve compatibility across the database environments the repo explicitly supports.
 
 ## Query rules
 - Parameterised queries always. Never string-concatenate user input into queries.

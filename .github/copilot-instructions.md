@@ -1,9 +1,17 @@
-# Engineering Contract (templated)
+# Engineering Contract
 
-This repository uses a templated agent contract to keep agentic workflow guidance generic and reusable.
+This repository is the canonical source for a portable prompt/meta supermind package.
 
-Use `.github/templates/copilot-instructions.template.md` as the canonical template and instantiate it for repo-specific needs.
+## Before doing anything
+- Read `.github/AGENTS.md`.
+- Read `.github/agent-platform/workflow-manifest.json` for task routing.
+- If repo requirements already exist in issues, specs, ADRs, or planning docs, read them before writing code.
 
-Template tokens available: `{{SRC_DIR}}`, `{{FRONTEND_DIR}}`, `{{TESTS_DIR}}`, `{{BACKEND_STACK}}`.
+## Agent routing
+- Default for all work → `@orchestrator`
+- Use the orchestrator's internal critique and requirement-lock phases; no packaged specialist agents are required.
 
-If you need a repo-specific copy for operational reasons, copy the template to `.github/copilot-instructions.md` and replace tokens accordingly.
+## Essentials
+- Never hardcode secrets; use environment variables.
+- Follow coding standards in `.github/instructions/` when relevant.
+- Non-trivial changes require explicit requirement locking before code.

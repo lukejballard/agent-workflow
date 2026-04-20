@@ -1,28 +1,26 @@
 ---
-applyTo: "frontend/**"
+applyTo: "**/*.tsx,**/*.jsx"
 ---
 
-# React + Vite frontend standards
+# React frontend standards
 
 ## Component rules
 - Pages and components stay thin. Move network and orchestration logic into hooks,
 	context, or page-scoped service modules.
-- No direct `fetch()` in components or pages. Use `frontend/src/api/` helpers and
-	typed wrappers in hooks, context, or services.
+- No direct `fetch()` in components or pages. Use shared API helpers and typed wrappers in hooks, context, or services.
 - Prop types via TypeScript interfaces or shared types. Never use PropTypes.
-- Extract reusable UI into `frontend/src/components/`.
+- Extract reusable UI into nearby shared component modules.
 - Maximum component length: 200 lines. Extract sub-components or hooks if longer.
 
 ## App structure
-- This frontend is a React + Vite SPA, not a Next.js app.
-- Use the existing `react-router-dom` patterns in `frontend/src/App.tsx` and `frontend/src/pages/`.
-- Browser-exposed environment variables must use the `VITE_` prefix via `import.meta.env`.
+- Match the router and application-shell patterns already used by the host repo.
+- When the host repo uses Vite, browser-exposed environment variables must use the `VITE_` prefix via `import.meta.env`.
 - Prefer route-level or page-level lazy loading when a screen is heavy.
 
 ## State management
 - Local state for component-scoped data.
-- Use existing Context providers for cross-cutting concerns already modeled in `frontend/src/context/`.
-- Keep REST calls in `frontend/src/api/`; keep shared API types in `frontend/src/types/`.
+- Use existing Context providers for cross-cutting concerns already modeled in the host repo.
+- Keep REST calls in shared API helpers; keep shared API types in nearby type modules.
 - Prefer hooks or page-local services over introducing a new global state library.
 
 ## Performance
@@ -32,5 +30,5 @@ applyTo: "frontend/**"
 - Keep expensive transforms out of render paths when they can live in hooks or helpers.
 
 ## Styling
-- Match the existing CSS and component patterns already used in `frontend/src/`.
+- Match the existing CSS and component patterns already used in the host repo.
 - No inline styles except for truly dynamic values.

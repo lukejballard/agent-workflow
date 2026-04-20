@@ -1,47 +1,38 @@
 # Product Direction
 
-This repository is intentionally product-neutral. Its purpose is to provide a
-reusable operating model for agent-assisted software delivery.
+This repository is no longer being framed as a runtime product scaffold.
+Its direction is a compact prompt/meta supermind package.
 
-## What Is Verified Today
+## What Is Active
 
-| Area | What is here now |
+| Area | What it means now |
 |---|---|
-| `docs/` | contributor guidance, architecture notes, active specs, and planning artifacts |
-| `.github/` | agent instructions, workflow metadata, prompts, and quality skills |
-| `scripts/` | helper scripts for repo maintenance and metadata validation |
-| `skills/` | supplemental release and audit checklists |
-| `src/agent_runtime/` | typed Python runtime — 19 modules, 396 unit tests, 100% coverage |
-| `frontend/` | React 19 / TypeScript / Vite SPA — typed API client, hooks, and operator UI |
-| `tests/unit/` | 396 passing unit tests covering all backend modules |
+| `.github/` | Canonical package source: orchestrator, workflow policy, hooks, and optional extension points |
+| `docs/` | Human-facing package architecture, runbooks, active specs, and archive |
+
+Other top-level folders that still exist during the collapse are transitional
+and should not be treated as the intended steady state.
 
 ## Current Source Of Truth
 
 Use these files in order when deciding what is current:
 
-1. `AGENTS.md` for the repo operating model.
-2. `docs/product-direction.md` for current repo framing.
-3. `docs/architecture.md` for the verified architecture summary.
-4. `docs/runbooks/agent-mode.md` and `.github/copilot-instructions.md` for contributor and agent workflow rules.
+1. `AGENTS.md` for source-repo operating rules.
+2. `.github/AGENTS.md` for the shipped package guide.
+3. `.github/agent-platform/workflow-manifest.json` for the canonical workflow policy.
+4. `docs/architecture.md` for the package architecture summary.
+5. `.github/copilot-instructions.md` and `docs/runbooks/agent-mode.md` for maintainer workflow rules.
 
-## How To Treat Inherited Planning Material
+## How To Treat Historical Material
 
-Some files in the repository were written during earlier planning phases for
-specific product directions. Those artifacts remain under `docs/specs/done/`
-and the archival planning directories as historical context.
-
-They may still help with:
-- workflow structure patterns
-- review checklist examples
-- spec organization templates
-- repo hygiene and governance patterns
-
-They should not be treated as active requirements unless they appear in
+The repository still contains documents and directories from earlier runtime,
+frontend, and evaluation phases. Those materials are historical context only
+unless they are explicitly retained in active package docs or in
 `docs/specs/active/`.
 
 ## Near-Term Direction
 
-1. Keep public docs, specs, scripts, and metadata aligned with the verified runtime.
-2. Maintain 100% test coverage across all `src/agent_runtime/` modules.
-3. Add the eval harness (`evals/`) to enable measurable benchmarking of agent
-   orchestration quality.
+1. Make the root `.github/` tree the only canonical package source.
+2. Remove duplicate packaging surfaces and runtime-product layers that do not
+   contribute to the supermind package.
+3. Keep the documentation small, explicit, and aligned with the shipped package.
