@@ -47,9 +47,23 @@ stack.
   copilot-instructions.md      Global engineering contract
   agents/                      Orchestrator
   agent-platform/              Workflow policy kernel and default stack policy
-  hooks/                       Tool approval hooks and runner
+  hooks/                       Tool approval hooks, phase engine, session schema
+    pretool_approval_policy.py   PreToolUse gate (phase, scope, safety)
+    posttool_validator.py        PostToolUse tracker (reads, edits, phase auto-detect)
+    session_schema.py            Typed session state with validation and migration
+    phase_engine.py              Phase state machine and edit gates
+    session_log.py               JSONL observability log and episodic memory
   instructions/                Optional path-specific coding standards
+    priority.instructions.md     Conflict resolution order for all instruction files
 ```
+
+## Runtime enforcement
+The hook system provides real enforcement beyond prompt instructions:
+- **Phase gates**: edits are blocked during bootstrap and context-loading phases.
+- **Scope gates**: edits outside `allowed_paths` require explicit approval.
+- **Session state**: typed, validated, and persisted across tool calls.
+- **Episodic memory**: structured JSONL artifact written on phase transitions.
+- **Observability**: all gate decisions and phase transitions logged to `.log.jsonl`.
 
 ## Key constraints
 - Default workflow stays inside one conversation.

@@ -7,8 +7,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from session_schema import read_session, write_session
+from phase_engine import can_edit_in_phase
+from session_log import append_log
+
 MAX_TOOL_CALLS = int(os.environ.get("AGENT_MAX_TOOL_CALLS", "50"))
-_SESSION_FILE = os.environ.get("AGENT_SESSION_FILE", "/tmp/agent-budget.json")
 
 DENY_COMMAND_PATTERNS = [
     (
@@ -92,14 +95,14 @@ EDIT_TOOL_NAMES = {
 
 PRE_CLASSIFICATION_PHASES = {"goal-anchor", "classify"}
 
-SURFACE_GUIDE_MAP: dict[str, str] = {
-    ".github/": ".github/agents.md",
-    "docs/": "docs/agents.md",
-}
-
 TERMINAL_TOOL_NAMES = {
     "run_in_terminal",
     "terminal",
+}
+
+SURFACE_GUIDE_MAP: dict[str, str] = {
+    ".github/": ".github/agents.md",
+    "docs/": "docs/agents.md",
 }
 
 
@@ -120,28 +123,11 @@ def _guide_was_read(guide: str, read_files: list[str]) -> bool:
     return any(item == norm_guide or item.endswith("/" + norm_guide) for item in read_files)
 
 
-def _read_session_file() -> dict[str, Any]:
-    try:
-        return json.loads(Path(_SESSION_FILE).read_text())
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
-
-
-def _write_session_file(data: dict[str, Any]) -> None:
-    path = Path(_SESSION_FILE)
-    tmp = path.with_suffix(".tmp")
-    try:
-        tmp.write_text(json.dumps(data, indent=2))
-        tmp.replace(path)
-    except OSError:
-        pass
-
-
 def check_and_increment_tool_call() -> tuple[bool, int]:
-    data = _read_session_file()
-    count = int(data.get("tool_call_count", 0)) + 1
-    data["tool_call_count"] = count
-    _write_session_file(data)
+    state = read_session()
+    state.tool_call_count += 1
+    count = state.tool_call_count
+    write_session(state)
     return count >= MAX_TOOL_CALLS, count
 
 
@@ -277,6 +263,7 @@ def main() -> int:
 
     limit_reached, call_count = check_and_increment_tool_call()
     if limit_reached:
+        append_log("budget_exceeded", {"count": call_count, "tool": tool_name})
         emit_pretool_decision(
             "ask",
             f"Tool call limit reached ({call_count}/{MAX_TOOL_CALLS}). Continuing may indicate an agent retry loop.",
@@ -293,6 +280,7 @@ def main() -> int:
         return 0
 
     if tool_name in EDIT_TOOL_NAMES and edit_targets_sensitive_surface(tool_name, tool_input):
+        append_log("sensitive_edit_blocked", {"tool": tool_name, "target": extract_edit_target_path(tool_input)})
         emit_pretool_decision(
             "ask",
             "Editing hook, policy, or secret-adjacent files requires manual approval.",
@@ -302,37 +290,61 @@ def main() -> int:
         )
         return 0
 
-    session_data = _read_session_file()
-    allowed_paths: list[str] = session_data.get("allowed_paths", [])
+    state = read_session()
+
+    # --- Phase enforcement gate ---
+    if tool_name in EDIT_TOOL_NAMES:
+        allowed, reason = can_edit_in_phase(state)
+        if not allowed:
+            target = extract_edit_target_path(tool_input) or "(unknown)"
+            append_log("phase_gate_blocked", {
+                "phase": state.current_phase,
+                "tool": tool_name,
+                "target": target,
+            })
+            emit_pretool_decision(
+                "ask",
+                f"Edit to '{target}' blocked: {reason}",
+                additional_context=(
+                    "The phase state machine requires context loading before edits. "
+                    f"Current phase: '{state.current_phase}'. "
+                    "Read bootstrap files and advance through planning phases first."
+                ),
+            )
+            return 0
+
+    # --- Scope enforcement gate ---
+    allowed_paths: list[str] = state.allowed_paths
     if tool_name in EDIT_TOOL_NAMES and edit_targets_out_of_scope(tool_name, tool_input, allowed_paths):
         target = extract_edit_target_path(tool_input) or "(unknown)"
+        append_log("scope_gate_blocked", {
+            "phase": state.current_phase,
+            "tool": tool_name,
+            "target": target,
+            "allowed_paths": allowed_paths,
+        })
         emit_pretool_decision(
             "ask",
             f"Edit target '{target}' is outside the task scope set by allowed_paths.",
             additional_context=(
-                "Confirm the edit is intentional or update the allowed_paths session metadata."
+                "Confirm the edit is intentional or update the allowed_paths session metadata. "
+                f"Allowed paths: {allowed_paths}"
             ),
         )
         return 0
 
-    current_phase = session_data.get("current_phase", "")
-    if tool_name in EDIT_TOOL_NAMES and current_phase in PRE_CLASSIFICATION_PHASES:
-        target = extract_edit_target_path(tool_input) or "(unknown)"
-        emit_pretool_decision(
-            "ask",
-            f"Edit to '{target}' requested while still in the '{current_phase}' phase.",
-            additional_context=(
-                "Progressive context loading expects classification before non-trivial edits begin."
-            ),
-        )
-        return 0
-
-    read_files: list[str] = session_data.get("read_files", [])
+    # --- Surface guide gate ---
+    read_files: list[str] = state.read_files
     if tool_name in EDIT_TOOL_NAMES and read_files:
         edit_target = extract_edit_target_path(tool_input)
         if edit_target:
             guide = _surface_guide_for(edit_target)
             if guide and not _guide_was_read(guide, read_files):
+                append_log("surface_guide_missing", {
+                    "tool": tool_name,
+                    "target": edit_target,
+                    "guide": guide,
+                })
                 emit_pretool_decision(
                     "ask",
                     f"Edit to '{edit_target}' targets a scoped surface but `{guide}` has not been read yet in this session.",

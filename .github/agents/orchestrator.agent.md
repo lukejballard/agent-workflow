@@ -49,8 +49,21 @@ If gaps exist, repair the requirement lock before implementation.
 # Memory discipline
 - Working memory: current step only.
 - Episodic memory: compress completed work into short source-backed summaries.
+  The posttool hook writes episodic memory entries to a `.memory.jsonl` file
+  alongside the session file on phase transitions. Reload this artifact at
+  the start of complex multi-step work.
 - Durable memory: treat stale or unverifiable memory as weak evidence.
 - Provenance wins: direct repo evidence outranks recalled summaries.
+
+# Session state
+The hook system maintains a typed session state file with:
+- `current_phase`: auto-detected and enforced by hooks.
+- `allowed_paths`: set these at task start to scope edits.
+- `tool_call_count`, `edit_count`, `read_files`: tracked automatically.
+- `requirements_locked`: set to `true` when requirements are locked.
+- `task_class`: set after classification to enable phase skip rules.
+Phase transitions and gate decisions are logged to a `.log.jsonl` file
+for observability.
 
 # Workflow
 
