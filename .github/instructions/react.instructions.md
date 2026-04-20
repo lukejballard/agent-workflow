@@ -9,6 +9,11 @@ applyTo: "**/*.tsx,**/*.jsx"
 - Prefer React Testing Library and `userEvent` for component and page tests.
 - Prefer a Vite SPA layout with `src/main.tsx`, `src/App.tsx`, route/page modules, shared components, API helpers, and shared types.
 
+## Default component and styling stack
+- When the user and host repo do not establish a component library, default to shadcn/ui + Tailwind CSS.
+- Use Lucide React for icons. Use class-variance-authority (cva) for component variants.
+- The frontend-design skill provides detailed standards for layout, typography, color, state completeness, and design spec artifacts.
+
 ## Component rules
 - Pages and components stay thin. Move network and orchestration logic into hooks,
 	context, or page-scoped service modules.

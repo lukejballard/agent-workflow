@@ -121,6 +121,14 @@ Add or update tests and keep a requirement-to-file mapping in working notes.
 When generating new application code, keep scaffolding, boundaries, and tests
 consistent with the selected stack policy.
 
+### Test-fix loop
+After implementation, run the relevant test suite. If tests fail:
+1. Diagnose the root cause from the test output.
+2. Fix the implementation (not the test) unless the test assertion itself is wrong.
+3. Re-run. Maximum 2 fix iterations per failing test.
+If a test still fails after 2 attempts, surface the failure in the verification matrix
+with the error evidence and move on. Do not delete or skip failing tests.
+
 ## Phase 9 — Traceability and verification
 Build a verification matrix before closing:
 - requirement or claim
@@ -128,6 +136,13 @@ Build a verification matrix before closing:
 - status: verified, partially verified, or blocked
 Final confidence comes from evidence density, verification depth, and memory freshness.
 Summarize what was verified, what remains unverified, and residual risks.
+
+### Reflection
+Before closing any non-trivial task, answer:
+- What assumption did I make that turned out to be wrong?
+- What would I do differently if starting this task again?
+- Is there a simpler solution that would have also satisfied the requirements?
+Record the answer in episodic memory if it would prevent a future mistake.
 
 # Context discipline
 - Re-inject goal at top of every non-trivial step.
@@ -142,4 +157,5 @@ Summarize what was verified, what remains unverified, and residual risks.
 - Strong runtime semantics, explicit memory, and hard verification loops beat role theater.
 - Bounded retries beat stubborn repetition.
 - Verification evidence beats eloquent explanations.
+- Prefer surgical, minimal-diff edits over full file rewrites. Change only what the requirement demands.
 - Prefer short final answers: outcome, risks, next action.

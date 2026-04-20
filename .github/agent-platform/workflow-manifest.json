@@ -123,5 +123,27 @@
     "implement-from-existing-spec",
     "test-only",
     "docs-only"
-  ]
+  ],
+  "phaseSkipRules": {
+    "trivial": {
+      "skip": ["lock-requirements", "adversarial-critique", "revise"],
+      "reason": "Trivial tasks don't need requirement contracts or critique cycles."
+    },
+    "research-only": {
+      "skip": ["lock-requirements", "choose-approach", "adversarial-critique", "revise", "execute-or-answer"],
+      "reason": "Research tasks collect and surface information; they don't implement."
+    },
+    "review-only": {
+      "skip": ["lock-requirements", "adversarial-critique", "revise", "execute-or-answer"],
+      "reason": "Review tasks analyze existing code; they produce findings, not implementations."
+    },
+    "docs-only": {
+      "skip": ["adversarial-critique"],
+      "reason": "Documentation changes need breadth scan and requirement awareness but not a full critique cycle."
+    },
+    "test-only": {
+      "skip": ["adversarial-critique"],
+      "reason": "Test-only tasks follow the spec; critique the implementation under test, not the tests themselves."
+    }
+  }
 }
