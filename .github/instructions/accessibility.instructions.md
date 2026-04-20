@@ -42,8 +42,10 @@ applyTo: "**/*.html,**/*.tsx,**/*.jsx"
   `aria-live="polite"` for non-urgent updates, `aria-live="assertive"` for errors.
 - Loading states: `aria-busy="true"` on the container being updated.
 - Error messages: associate with the input via `aria-describedby`.
+- Route-level status, success, and error banners should be announced without stealing focus unless the interaction is blocking.
 
 ## Testing accessibility
 - Automated: run `axe-core` or `@axe-core/playwright` in E2E suite.
 - Manual: tab through every new feature to verify keyboard navigation.
 - Screen reader: test with VoiceOver (macOS) or NVDA (Windows) for complex interactions.
+- In React tests, prefer queries by role, label, and accessible name so accessibility regressions surface naturally.

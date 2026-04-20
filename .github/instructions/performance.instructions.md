@@ -11,6 +11,8 @@ applyTo: "**/*.py,**/*.ts,**/*.tsx"
 - Cache expensive computations only when profiling shows a real hot path.
 - Move long-running work out of request handlers into the existing execution or worker flows when practical.
 - Set timeouts on all outbound HTTP calls. Never allow unbounded waits.
+- Paginate collection endpoints and stream large responses incrementally instead of loading everything into memory.
+- For SSE or streaming routes, stop upstream work promptly on disconnect and avoid unbounded event buffers.
 - Profile before optimising: use `py-spy` or `cProfile` to find real hot spots.
 
 ## TypeScript and frontend
@@ -19,6 +21,7 @@ applyTo: "**/*.py,**/*.ts,**/*.tsx"
 - Lazy-load heavy route-sized modules instead of pushing them into the initial bundle.
 - Virtualise long lists or large tables instead of rendering unbounded DOM.
 - Avoid speculative memoization. Add `React.memo`, `useMemo`, or `useCallback` only after profiling.
+- For generated Vite apps, keep the initial route light and push admin, editor, or analytics-heavy screens behind route-level splitting.
 
 ## Browser performance
 - Avoid layout thrashing: batch DOM reads before DOM writes when manipulating complex UI.

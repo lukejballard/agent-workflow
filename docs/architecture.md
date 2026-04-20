@@ -18,7 +18,7 @@ Defines the shipped supermind package.
 | `.github/AGENTS.md` | Primary package context |
 | `.github/copilot-instructions.md` | Global package contract |
 | `.github/agents/orchestrator.agent.md` | Single-entry orchestrator behavior |
-| `.github/agent-platform/workflow-manifest.json` | Canonical workflow, requirement-lock, memory, retry, and verification policy |
+| `.github/agent-platform/workflow-manifest.json` | Canonical workflow, requirement-lock, memory, retry, verification, and default generated stack policy |
 | `.github/hooks/` | Deterministic approval and hook enforcement |
 | `.github/instructions/` | Optional path-specific coding standards for consuming repos |
 
@@ -43,11 +43,29 @@ The supermind is intentionally compact:
 - bounded retries with changed strategy requirements
 - evidence-backed verification rather than confidence-only summaries
 
+## Default generation stack
+
+The package remains a prompt/meta control plane, but it still carries a default
+application stack for generated work when the user and host repo have not
+already established one.
+
+Precedence is:
+1. explicit user requirement
+2. established host-repo stack evidence
+3. package default declared in `.github/agent-platform/workflow-manifest.json`
+
+The current package default is:
+- Backend: Python + FastAPI + Pydantic + SQLAlchemy + Alembic
+- Frontend: React + TypeScript + Vite + Vitest
+
+That policy lives entirely inside the existing `.github/` control plane and
+does not widen the package boundary or restore runtime-oriented root folders.
+
 ## Transitional Surfaces
 
-Runtime, frontend, test, eval, and helper-script layers may still exist while
-the collapse is in progress, but they are not part of the intended steady-state
-architecture unless explicitly retained.
+Runtime, frontend, test, eval, and helper-script layers may still exist in the
+source repo for maintainer or workspace reasons, but they are not part of the
+intended shipped package boundary unless explicitly retained.
 
 ## Source of Truth
 

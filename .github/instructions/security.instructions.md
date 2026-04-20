@@ -10,6 +10,11 @@ applyTo: "**/*.py,**/*.ts,**/*.tsx"
 - TypeScript: Zod schemas, `.strict()`.
 - Reject unexpected fields. Never pass raw request body to services or DB.
 
+## Stack-specific defaults
+- FastAPI: declare request and response models, keep auth and DB session wiring in dependencies, and avoid returning raw ORM models from handlers.
+- FastAPI: configure CORS narrowly for the actual frontend origin set. Never use wildcard origins for authenticated browser traffic.
+- React/Vite: browser-exposed configuration must come from `import.meta.env` and only `VITE_` variables may cross the browser boundary.
+
 ## Output / rendering
 - Sanitize all user-generated content before rendering.
 - React: rely on JSX escaping. Never use `dangerouslySetInnerHTML` with user data.

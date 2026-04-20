@@ -23,6 +23,22 @@ Non-trivial changes require an explicit requirement lock before code begins.
 Use existing repo requirements when they exist; otherwise create an inline
 requirements contract before editing.
 
+## Default generation stack
+
+When generated application work needs a stack decision and neither the user nor
+the host repo has already fixed one, prefer:
+- Backend: Python + FastAPI + Pydantic + SQLAlchemy + Alembic
+- Frontend: React + TypeScript + Vite + Vitest
+
+Precedence is strict:
+1. explicit user requirement
+2. established host-repo stack evidence
+3. package default above
+
+These defaults guide scaffolding, examples, tests, and architecture choices for
+generated work. They do not justify rewriting an existing repo onto a different
+stack.
+
 ## Where things live
 
 ```
@@ -30,7 +46,7 @@ requirements contract before editing.
   AGENTS.md                    Primary package context
   copilot-instructions.md      Global engineering contract
   agents/                      Orchestrator
-  agent-platform/              Workflow policy kernel
+  agent-platform/              Workflow policy kernel and default stack policy
   hooks/                       Tool approval hooks and runner
   instructions/                Optional path-specific coding standards
 ```

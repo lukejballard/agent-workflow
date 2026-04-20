@@ -4,6 +4,11 @@ applyTo: "**/*.tsx,**/*.jsx"
 
 # React frontend standards
 
+## Default generated frontend stack
+- When the user and host repo do not establish a frontend stack, default to React + TypeScript + Vite + react-router-dom + Vitest.
+- Prefer React Testing Library and `userEvent` for component and page tests.
+- Prefer a Vite SPA layout with `src/main.tsx`, `src/App.tsx`, route/page modules, shared components, API helpers, and shared types.
+
 ## Component rules
 - Pages and components stay thin. Move network and orchestration logic into hooks,
 	context, or page-scoped service modules.
@@ -14,6 +19,7 @@ applyTo: "**/*.tsx,**/*.jsx"
 
 ## App structure
 - Match the router and application-shell patterns already used by the host repo.
+- For generated apps without an established structure, prefer `src/pages/`, `src/components/`, `src/api/`, `src/hooks/`, and `src/types/`.
 - When the host repo uses Vite, browser-exposed environment variables must use the `VITE_` prefix via `import.meta.env`.
 - Prefer route-level or page-level lazy loading when a screen is heavy.
 

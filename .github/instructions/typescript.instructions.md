@@ -4,6 +4,10 @@ applyTo: "**/*.ts,**/*.tsx"
 
 # TypeScript standards
 
+## Default generated frontend TypeScript stack
+- When the user and host repo do not establish a frontend stack, default to React + TypeScript + Vite + Vitest.
+- Prefer strict ESM-friendly TypeScript, shared domain types in `types/` or nearby `*.types.ts`, and typed API helpers at the network boundary.
+
 ## Compiler settings (tsconfig.json)
 - `"strict": true` always.
 - `"noUncheckedIndexedAccess": true`.
@@ -27,6 +31,7 @@ applyTo: "**/*.ts,**/*.tsx"
 - Do not assume a path alias exists. Use the import style configured by the local tsconfig.
 - Avoid creating barrel files or package boundaries unless the surrounding area already uses them.
 - Keep API shapes aligned with the local client modules and shared type definitions.
+- For generated React/Vite apps, prefer relative imports until the repo explicitly establishes aliases.
 
 ## Error handling
 - Use typed errors: `class DomainError extends Error { constructor(...) }`.

@@ -4,6 +4,11 @@ applyTo: "**/*.test.ts,**/*.test.tsx,**/*.test.py,**/tests/**,**/test_*.py,**/*_
 
 # Testing standards
 
+## Default generated test stack
+- Backend default: pytest + pytest-asyncio for Python/FastAPI services.
+- Frontend default: Vitest + `@testing-library/react` + `userEvent` for React/Vite apps.
+- Prefer testing through public boundaries: ASGI app, API clients, pages, components, and hooks.
+
 ## What every test suite must cover
 - Happy path (expected successful behaviour)
 - All error paths and failure modes
@@ -33,12 +38,16 @@ applyTo: "**/*.test.ts,**/*.test.tsx,**/*.test.py,**/tests/**,**/test_*.py,**/*_
 - `pytest-asyncio` with `asyncio_mode = "auto"` for async tests.
 - Factory fixtures using `factory_boy` over hardcoded test data.
 - Database tests: wrap each test in a transaction rolled back at teardown.
+- For generated FastAPI services, test request validation, auth boundaries, error responses, and serialization through the ASGI app.
+- Cover `401`, `403`, `404`, `409`, and `422` cases when the route family can produce them.
 
 ## TypeScript-specific
 - Vitest. Use `vi.mock()` at module level (not inside test body).
 - `vi.useFakeTimers()` for time-dependent tests.
 - `@testing-library/react` for component tests. Never test implementation details.
 - `userEvent` over `fireEvent` for interaction simulation.
+- Prefer queries by role, label, placeholder, and accessible name before falling back to test IDs.
+- For generated React/Vite apps, cover loading, success, empty, and error states at the page or hook boundary.
 
 ## Coverage
 - Minimum 80% line + branch coverage on all new code.

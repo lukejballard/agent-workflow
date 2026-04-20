@@ -4,12 +4,18 @@ applyTo: "**/*route*.py,**/*api*.py,**/*api*.ts,**/*api*.tsx"
 
 # API client and route standards
 
+## Default generated API stack
+- When the framework choice is open, default to FastAPI route modules backed by Pydantic request and response models.
+- Prefer one `APIRouter` per resource family plus an app factory that wires routers, middleware, settings, and dependencies.
+- Use typed frontend client helpers that mirror backend request and response models.
+
 ## Route design
 - Match the existing route families and prefixes in neighboring files.
 - Do not introduce `/v1/` versioning or a brand-new top-level route style unless the spec requires it.
+- For FastAPI, prefer explicit `prefix`, `tags`, `status_code`, and `response_model` declarations instead of implicit defaults.
 - Keep route modules thin: validate input, call service/storage helpers, and shape responses.
 - Reuse or add local request/response models when small instead of scattering ad hoc dict shapes.
-- Preserve special response modes where required, including `text/plain` and `text/event-stream`.
+- Preserve special response modes where required, including `text/plain` and `text/event-stream`. For SSE, use framework-native streaming primitives and typed event payloads.
 
 ## HTTP status codes
 - `200` — success with body
@@ -29,6 +35,7 @@ applyTo: "**/*route*.py,**/*api*.py,**/*api*.ts,**/*api*.tsx"
 - For list endpoints, filtering and pagination should match the neighboring route family instead of inventing a new shape.
 - New or changed endpoints must be reflected in the local architecture or API docs when that repo maintains them.
 - Never expose stack traces or raw internal exceptions in API responses.
+- Keep auth, DB session, and settings wiring in route dependencies or middleware, not ad hoc globals inside handlers.
 
 ## Auth
 - Follow the existing auth and middleware patterns for authenticated endpoints.
@@ -39,6 +46,7 @@ applyTo: "**/*route*.py,**/*api*.py,**/*api*.ts,**/*api*.tsx"
 - Add one typed function per endpoint or resource group in the local API layer.
 - Mirror response types in shared type modules when the repo separates transport and UI layers.
 - Components and pages should call these helpers through hooks, context, or page-level services rather than `fetch()` directly.
+- For generated React/Vite frontends, prefer a shared `http` helper plus resource-group modules and page-level hooks or services.
 
 ## Rate limiting
 - Apply rate limits at the API gateway or middleware layer.

@@ -29,6 +29,37 @@
       "docs-only"
     ]
   },
+  "implementationDefaults": {
+    "description": "Default application stack for generated work when the user and host repo do not already establish a different implementation path.",
+    "overridePrecedence": [
+      "explicit-user-request",
+      "host-repo-established-stack",
+      "package-default"
+    ],
+    "applyWhenTaskClasses": [
+      "greenfield-feature",
+      "implement-from-existing-spec",
+      "brownfield-improvement"
+    ],
+    "respectEstablishedRepoStack": true,
+    "packageDefault": {
+      "backend": {
+        "language": "python",
+        "framework": "fastapi",
+        "validation": "pydantic-v2",
+        "orm": "sqlalchemy-2",
+        "migrations": "alembic"
+      },
+      "frontend": {
+        "language": "typescript",
+        "framework": "react",
+        "build": "vite",
+        "testing": "vitest",
+        "componentTesting": "react-testing-library",
+        "routing": "react-router-dom"
+      }
+    }
+  },
   "requirementLock": {
     "preferredSources": [
       "repo-spec-or-plan",

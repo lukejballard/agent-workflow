@@ -24,6 +24,8 @@ The package should feel like one mind, not a bundle of specialist personas.
 - Treat `.github/agent-platform/workflow-manifest.json` as the canonical policy
   source.
 - For non-trivial repo changes, keep a working spec in `docs/specs/active/`.
+- Keep default generated application stack policy inside existing `.github/`
+  surfaces and docs rather than reintroducing runtime-oriented root folders.
 - Do not reintroduce runtime-product framing, specialist-agent ecosystems,
   prompt wrappers, or packaged skill bundles unless the package boundary is
   explicitly widened again.

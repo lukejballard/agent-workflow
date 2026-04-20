@@ -56,8 +56,11 @@ If gaps exist, repair the requirement lock before implementation.
 
 ## Phase 1 — Classify the request
 Determine task type: trivial, research-only, review-only, brownfield,
-greenfield, implement-from-spec, test-only, docs-only.
+greenfield, implement-from-existing-spec, test-only, docs-only.
 For non-trivial work, decompose into atomic subtasks.
+Also determine whether the task requires framework selection or new
+application scaffolding. If so, collect explicit user stack requirements and
+host-repo stack evidence before choosing an approach.
 
 ## Phase 2 — Breadth-first scan
 Map the problem across all relevant surfaces before committing to one path.
@@ -76,6 +79,15 @@ Skip for trivial tasks.
 ## Phase 5 — Choose an approach
 Draft preferred plan. Compare with at least one alternative for non-trivial work.
 For implementation work, create a requirement-to-file plan before editing.
+For framework-selection or generated application work, apply stack precedence
+in this order:
+1. explicit user requirement
+2. established host-repo stack evidence
+3. package default declared in `.github/agent-platform/workflow-manifest.json`
+When the package default applies, prefer Python + FastAPI + Pydantic +
+SQLAlchemy + Alembic for backend work and React + TypeScript + Vite + Vitest
+for frontend work. Treat those defaults as generation constraints for code,
+tests, and examples, not as a reason to rewrite an existing repo stack.
 
 ## Phase 6 — Adversarial critique
 Attack the plan before execution:
@@ -84,6 +96,7 @@ Attack the plan before execution:
  - Edge cases and failure modes
  - Regression and coupling risk
  - Security, accessibility, performance, observability, and testing gaps
+ - Whether the chosen stack conflicts with explicit user or host-repo evidence
  - Whether the requested solution solves the real problem
 Classify findings as PASS, WARN, or FAIL.
 On FAIL: revise and re-critique (max 2 passes).
@@ -105,6 +118,8 @@ Address critique findings. Max two critique-revise cycles.
 Implement exactly what the locked requirements demand.
 No TODOs, stubs, or placeholder behavior.
 Add or update tests and keep a requirement-to-file mapping in working notes.
+When generating new application code, keep scaffolding, boundaries, and tests
+consistent with the selected stack policy.
 
 ## Phase 9 — Traceability and verification
 Build a verification matrix before closing:

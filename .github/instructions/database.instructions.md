@@ -4,8 +4,13 @@ applyTo: "**/storage/**,**/migrations/**,**/*service*.py,**/db.py"
 
 # Database standards
 
+## Default generated persistence stack
+- When the repo does not already establish a persistence stack, default to SQLAlchemy 2 declarative models plus Alembic migrations.
+- Prefer one session-per-request or equivalent unit-of-work boundary wired through framework dependencies.
+- Keep API schemas and ORM models separate.
+
 ## Migrations
-- Every schema change must update the owning models and include a migration when the repo uses migration files.
+- Every schema change must update the owning models and include an Alembic migration when the repo uses migration files.
 - Never alter the production schema manually.
 - Migrations must be reversible when possible. Implement `downgrade()` or document why rollback is not safe.
 - Never drop a column or table in the same migration that removes all code references to it.
@@ -17,6 +22,7 @@ applyTo: "**/storage/**,**/migrations/**,**/*service*.py,**/db.py"
 ## Storage patterns
 - Keep database access in `storage/` or in dedicated service helpers that already own that query path.
 - Route files should not grow ad hoc SQL or session-management logic.
+- For generated SQLAlchemy 2 code, prefer typed `Mapped[...]` models, `mapped_column`, explicit relationships, and scoped session helpers.
 - Match the existing ORM and session patterns already used in the repo.
 - Preserve compatibility across the database environments the repo explicitly supports.
 
