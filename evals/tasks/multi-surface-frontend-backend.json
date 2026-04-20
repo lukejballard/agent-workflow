@@ -1,0 +1,15 @@
+{
+  "id": "multi-surface-frontend-backend",
+  "title": "Add user profile page with backend endpoint and frontend component",
+  "taskClass": "greenfield-feature",
+  "prompt": "Implement a user profile page. Backend: add GET /users/{id} endpoint returning name, email, and role. Frontend: add a ProfilePage React component that fetches and displays the profile data. Include loading and error states. Wire the route into the app router.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "required",
+    "skill_triggered": ["frontend-best-practices", "observability-inject"],
+    "adversarial_triggered": "advisory",
+    "notes": "Multi-surface greenfield task spanning src/ and frontend/. Both surface AGENTS.md files must be read before editing. frontend-best-practices skill required."
+  },
+  "tags": ["greenfield", "backend", "frontend", "multi-surface", "react", "api"]
+}

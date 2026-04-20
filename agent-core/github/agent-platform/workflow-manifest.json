@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "canonical": true,
+  "description": "Workflow policy kernel for the single hyperintelligent orchestrator. Defines task classes, phase order, requirement locking, memory discipline, retry policy, and verification semantics.",
+  "workflow": {
+    "phaseOrder": [
+      "goal-anchor",
+      "classify",
+      "breadth-scan",
+      "depth-dive",
+      "lock-requirements",
+      "choose-approach",
+      "adversarial-critique",
+      "revise",
+      "execute-or-answer",
+      "traceability-and-verify"
+    ],
+    "maxCritiquePasses": 2,
+    "maxAttemptsPerSubtask": 2,
+    "requireExplicitRequirementsFor": [
+      "brownfield-improvement",
+      "greenfield-feature",
+      "implement-from-existing-spec"
+    ],
+    "explicitRequirementLockOptionalFor": [
+      "trivial",
+      "research-only",
+      "review-only",
+      "docs-only"
+    ]
+  },
+  "requirementLock": {
+    "preferredSources": [
+      "repo-spec-or-plan",
+      "issue-or-ticket",
+      "inline-requirements-contract"
+    ],
+    "requiredFields": [
+      "problem",
+      "behaviors",
+      "constraints",
+      "verification"
+    ]
+  },
+  "memoryPolicy": {
+    "workingMemoryScope": "current-step-only",
+    "episodicCompression": "required-after-completed-step",
+    "durableMemory": {
+      "requireProvenance": true,
+      "preferFreshEvidence": true,
+      "ignoreStaleOrUnverified": true
+    }
+  },
+  "recoveryPolicy": {
+    "classifyFailuresAs": [
+      "transient-tool",
+      "transient-environment",
+      "missing-context",
+      "requirements-gap",
+      "unsafe-block",
+      "logic-defect"
+    ],
+    "retryOnlyWhenStrategyChanges": true,
+    "neverRepeatIdenticalStep": true,
+    "escalateAfterAttempts": 2
+  },
+  "verificationPolicy": {
+    "requireVerificationMatrixFor": [
+      "brownfield-improvement",
+      "greenfield-feature",
+      "implement-from-existing-spec",
+      "test-only"
+    ],
+    "requireEvidencePerClaim": true,
+    "allowedFinalStates": [
+      "verified",
+      "partially-verified",
+      "blocked"
+    ],
+    "confidenceSignals": [
+      "evidence-density",
+      "verification-depth",
+      "memory-freshness"
+    ]
+  },
+  "taskClasses": [
+    "trivial",
+    "research-only",
+    "review-only",
+    "brownfield-improvement",
+    "greenfield-feature",
+    "implement-from-existing-spec",
+    "test-only",
+    "docs-only"
+  ]
+}

@@ -36,3 +36,26 @@ jobs:
         run: |
           pip install semgrep --quiet
           semgrep --config .semgrep.yml src/ --error
+
+      - name: Validate eval task corpus
+        if: hashFiles('evals/tasks/*.json') != ''
+        run: python evals/run_evals.py --dry-run
+
+      - name: Spec checklist completeness
+        run: python scripts/agent/check_spec_checklist.py
+
+      - name: Workflow phase transition coverage
+        run: python -m compileall scripts/agent/workflow_phases.py -q
+
+      - name: Orchestrator progressive context loading contract
+        run: python scripts/agent/check_context_loading.py
+
+      - name: Compile agent scripts (posttool, memory, failure index, contract check)
+        run: python -m compileall scripts/agent/posttool_validator.py scripts/agent/memory_store.py scripts/agent/failure_index.py scripts/agent/contract_check.py scripts/agent/trace_logger.py -q
+
+      - name: API contract snapshot status (no-op when snapshot absent)
+        if: hashFiles('.github/agent-platform/openapi.snapshot.json') != ''
+        run: python scripts/agent/contract_check.py status
+
+      - name: Validate eval task corpus (regression-detection tasks included)
+        run: python evals/run_evals.py --dry-run

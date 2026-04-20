@@ -11,6 +11,23 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# Workflow phase validator — imported lazily to avoid hard dependency during
+# bootstrap before the scripts/agent directory is on sys.path.
+def _validate_workflow_phases(packet: dict[str, Any], label: str, errors: list[str]) -> None:
+    """Validate the current_phase field in a context packet."""
+    import importlib.util
+    spec_path = Path(__file__).parent / "workflow_phases.py"
+    if not spec_path.exists():
+        return  # Not yet created — skip silently.
+    spec = importlib.util.spec_from_file_location("workflow_phases", spec_path)
+    if spec is None or spec.loader is None:
+        return
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)  # type: ignore[union-attr]
+    phase_errors = mod.validate_packet(packet)
+    for err in phase_errors:
+        errors.append(f"{label}: {err}")
+
 EXPECTED_ARTIFACT_PATHS = {
     "repoMap": ".github/agent-platform/repo-map.json",
     "skillRegistry": ".github/agent-platform/skill-registry.json",
@@ -958,6 +975,7 @@ def validate_context_packet_example(
     validate_context_packet_health(
         packet.get("context_health"), f"{label} context_health", errors
     )
+    _validate_workflow_phases(packet, label, errors)
     return errors
 
 
@@ -1395,12 +1413,35 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Validate metadata and fail if files drift.",
     )
+    mode.add_argument(
+        "--validate-packet",
+        metavar="PATH",
+        help="Validate a single context-packet JSON file against the schema.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     repo_root = args.repo_root.resolve()
+
+    if args.validate_packet:
+        packet_path = Path(args.validate_packet).resolve()
+        if not packet_path.exists():
+            print(f"ERROR: file not found: {packet_path}", file=sys.stderr)
+            return 1
+        try:
+            packet = json.loads(packet_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            print(f"ERROR: invalid JSON in {packet_path}: {exc}", file=sys.stderr)
+            return 1
+        errors = validate_context_packet_example(repo_root, packet_path, packet)
+        if errors:
+            for error in errors:
+                print(f"ERROR: {error}", file=sys.stderr)
+            return 1
+        print(f"context packet valid: {packet_path}")
+        return 0
 
     if args.write:
         try:

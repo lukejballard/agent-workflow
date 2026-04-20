@@ -8,6 +8,15 @@
         "osx": "python3 scripts/agent/pretool_approval_policy.py",
         "timeout": 15
       }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "windows": "python scripts\\agent\\posttool_validator.py",
+        "linux": "python3 scripts/agent/posttool_validator.py",
+        "osx": "python3 scripts/agent/posttool_validator.py",
+        "timeout": 5
+      }
     ]
   }
 }

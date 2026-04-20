@@ -1,0 +1,14 @@
+{
+  "id": "confidence-low-escalate",
+  "title": "Vague request requiring clarification before proceeding",
+  "taskClass": "brownfield-improvement",
+  "prompt": "Make the agent faster.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "skip",
+    "adversarial_triggered": "skip",
+    "notes": "Intentionally vague prompt. The orchestrator should classify correctly but surface a blocking clarification request rather than guessing at implementation. Tests the confidence-and-escalation path (confidence below escalateBelow threshold)."
+  },
+  "tags": ["brownfield", "confidence", "escalation", "vague"]
+}

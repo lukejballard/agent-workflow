@@ -107,41 +107,38 @@ EDIT_TOOL_NAMES = {
     "mcp_filesystem_move_file",
 }
 
+# Workflow phases (from workflow_phases.py) that precede task classification.
+# Gate 5 checks for premature edits when the session is still in these phases.
+PRE_CLASSIFICATION_PHASES = {"goal-anchor", "classify"}
+
+# Map of path prefix → surface-scoped AGENTS.md that must be read before
+# the first edit targeting that surface (Gate 6).
+# Keys are forward-slash, lowercase prefixes; values are relative guide paths.
+SURFACE_GUIDE_MAP: dict[str, str] = {
+    "src/": "src/agents.md",
+    "frontend/": "frontend/agents.md",
+    "tests/": "tests/agents.md",
+}
+
 TERMINAL_TOOL_NAMES = {
     "run_in_terminal",
     "terminal",
 }
 
 
-def _read_session_file() -> dict[str, Any]:
-    try:
-        return json.loads(Path(_SESSION_FILE).read_text())
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+def _surface_guide_for(path: str) -> str | None:
+    """Return the AGENTS.md guide that governs the given file path, or None."""
+    norm = _normalise_path(path)
+    for prefix, guide in SURFACE_GUIDE_MAP.items():
+        if norm.startswith(prefix.rstrip("/")):
+            return guide
+    return None
 
 
-def _write_session_file(data: dict[str, Any]) -> None:
-    path = Path(_SESSION_FILE)
-    tmp = path.with_suffix(".tmp")
-    try:
-        tmp.write_text(json.dumps(data, indent=2))
-        tmp.replace(path)
-    except OSError:
-        # Non-fatal: if we can't write the session file, we continue rather
-        # than blocking every tool call.
-        pass
-
-
-def check_and_increment_tool_call() -> tuple[bool, int]:
-    """Increment the tool call counter and return (limit_reached, new_count).
-
-    Returns (True, count) if MAX_TOOL_CALLS has been reached.
-    """
-    data = _read_session_file()
-    count = int(data.get("tool_call_count", 0)) + 1
-    data["tool_call_count"] = count
-    _write_session_file(data)
-    return count >= MAX_TOOL_CALLS, count
+def _guide_was_read(guide: str, read_files: list[str]) -> bool:
+    """Return True when guide appears as a suffix in any recorded read path."""
+    norm_guide = guide.replace("\\", "/").lower()
+    return any(r == norm_guide or r.endswith("/" + norm_guide) for r in read_files)
 
 
 def _read_session_file() -> dict[str, Any]:
@@ -230,6 +227,41 @@ def edit_targets_sensitive_surface(tool_name: str, tool_input: dict[str, Any]) -
     return any(marker in item for item in lowered for marker in SENSITIVE_PATH_MARKERS)
 
 
+def _normalise_path(raw: str) -> str:
+    """Return a forward-slash path string, lowercased for comparison."""
+    return raw.replace("\\", "/").lower().rstrip("/")
+
+
+def extract_edit_target_path(tool_input: dict[str, Any]) -> str | None:
+    """Return the primary file path argument from an edit tool input, if present."""
+    for key in ("filePath", "file_path", "path", "filename", "target", "destination"):
+        value = tool_input.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def edit_targets_out_of_scope(
+    tool_name: str, tool_input: dict[str, Any], allowed_paths: list[str]
+) -> bool:
+    """Return True when the edit target is outside every allowed_path prefix.
+
+    Does nothing (returns False) when allowed_paths is empty, when the target
+    path cannot be determined, or when the tool is apply_patch (patch blobs
+    may span multiple files — skip scope check for them).
+    """
+    if not allowed_paths or tool_name == "apply_patch":
+        return False
+
+    target = extract_edit_target_path(tool_input)
+    if not target:
+        return False
+
+    norm_target = _normalise_path(target)
+    norm_allowed = [_normalise_path(p) for p in allowed_paths]
+    return not any(norm_target.startswith(p) for p in norm_allowed)
+
+
 def handle_terminal(tool_input: dict[str, Any]) -> bool:
     command = extract_terminal_command(tool_input)
     if not command:
@@ -309,6 +341,70 @@ def main() -> int:
             additional_context="Sensitive automation and configuration surfaces should not be changed silently, even in an otherwise auto-approved session.",
         )
         return 0
+
+    # --- Gate 4: allowed_paths scope enforcement ---
+    session_data = _read_session_file()
+    allowed_paths: list[str] = session_data.get("allowed_paths", [])
+    if (
+        tool_name in EDIT_TOOL_NAMES
+        and edit_targets_out_of_scope(tool_name, tool_input, allowed_paths)
+    ):
+        target = extract_edit_target_path(tool_input) or "(unknown)"
+        emit_pretool_decision(
+            "ask",
+            f"Edit target '{target}' is outside the task scope set by allowed_paths.",
+            additional_context=(
+                "The orchestrator set an allowed_paths scope at task classification time. "
+                "Editing outside that scope may indicate scope creep or an incorrect target. "
+                "Confirm the edit is intentional or update allowed_paths in the session file."
+            ),
+        )
+        return 0
+
+    # --- Gate 5: phase-aware pre-classification edit protection ---
+    # Only fires when the orchestrator has explicitly written a current_phase to
+    # the session file (opt-in via workflow_phases.set_workflow_phase). If the
+    # session phase is goal-anchor or classify, edits should not yet be happening.
+    current_phase = session_data.get("current_phase", "")
+    if (
+        tool_name in EDIT_TOOL_NAMES
+        and current_phase in PRE_CLASSIFICATION_PHASES
+    ):
+        target = extract_edit_target_path(tool_input) or "(unknown)"
+        emit_pretool_decision(
+            "ask",
+            f"Edit to '{target}' requested while still in the '{current_phase}' phase "
+            "(pre-classification). Progressive context loading policy requires the task "
+            "to be classified before any file edits begin.",
+            additional_context=(
+                "Update the session phase first by running: "
+                "python scripts/agent/workflow_phases.py set-phase <phase>. "
+                "If this edit is genuinely needed during bootstrap, confirm to proceed."
+            ),
+        )
+        return 0
+
+    # --- Gate 6: surface AGENTS.md must be read before editing that surface ---
+    # Only enforced when read_files has been populated by posttool_validator.py.
+    # Guards src/, frontend/, and tests/ surfaces so the agent loads scoped
+    # guidance before making the first edit.
+    read_files: list[str] = session_data.get("read_files", [])
+    if tool_name in EDIT_TOOL_NAMES and read_files:
+        edit_target = extract_edit_target_path(tool_input)
+        if edit_target:
+            guide = _surface_guide_for(edit_target)
+            if guide and not _guide_was_read(guide, read_files):
+                emit_pretool_decision(
+                    "ask",
+                    f"Edit to '{edit_target}' targets a scoped surface but "
+                    f"`{guide}` has not been read yet in this session.",
+                    additional_context=(
+                        f"Load `{guide}` first to apply the surface-specific coding "
+                        "standards, then retry the edit. Confirm to bypass if the "
+                        "surface guidance was reviewed in an earlier session."
+                    ),
+                )
+                return 0
 
     emit_continue()
     return 0

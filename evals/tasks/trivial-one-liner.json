@@ -1,0 +1,14 @@
+{
+  "id": "trivial-one-liner",
+  "title": "Rename a constant in schemas.py",
+  "taskClass": "trivial",
+  "prompt": "Rename the constant DEFAULT_TIMEOUT to DEFAULT_TIMEOUT_SECONDS in src/agent_runtime/schemas.py.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "skip",
+    "spec_created": "forbidden",
+    "adversarial_triggered": "skip",
+    "notes": "Trivial rename. Should not trigger spec creation or adversarial review."
+  },
+  "tags": ["trivial", "backend"]
+}

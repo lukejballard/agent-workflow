@@ -1,0 +1,15 @@
+{
+  "id": "context-health-trim",
+  "title": "Large brownfield change requiring context management across many files",
+  "taskClass": "brownfield-improvement",
+  "prompt": "Refactor the RuntimeStore in src/agent_runtime/ to support multiple named stores per process. Each store should be keyed by a workspace ID string. Update all route handlers in routes.py to accept a workspace_id path parameter, update all tests, update the TypeScript API client and all frontend hooks, and update docs/architecture.md to reflect the new multi-store design.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "required",
+    "skill_triggered": ["test-hardening", "regression-audit", "observability-inject"],
+    "adversarial_triggered": "required",
+    "notes": "Wide-impact refactor touching every layer. Designed to exercise the context health gate: working set should exceed 70% utilization, requiring the orchestrator to trim or compress. Multiple skills expected."
+  },
+  "tags": ["brownfield", "refactor", "multi-surface", "context-health", "high-risk", "runtime"]
+}

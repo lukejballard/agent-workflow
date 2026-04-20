@@ -2,56 +2,105 @@
 
 ## Repository Goal
 
-This repository is a generic scaffold for agent-driven software delivery. Its
-stable value today is the workflow control plane: instructions, prompts,
-skills, specs, and maintenance scripts that help contributors build or restore
-an application safely.
+This repository is an agent-driven software delivery scaffold that has grown
+into a production-minded engineering intelligence layer.  It combines a
+workflow-governance control plane (`.github/`) with a typed Python runtime
+core (`src/agent_runtime/`) and a React/TypeScript operator frontend
+(`frontend/`).
 
 ## Verified Repo State
 
-The following areas are present and verified in this snapshot:
-- `.github/` agent workflows, instructions, prompts, and metadata
-- `docs/` contributor, architecture, and planning documentation
-- `openspec/`, `specs/`, and `.specify/` planning inputs and templates
-- `scripts/` helper and maintenance scripts
-- scoped guidance files under `src/`, `frontend/`, and `tests/`
+The following areas are present and verified:
 
-## Current Architectural Truth
+- `.github/` — workflow governance, instructions, prompts, agents, and
+  canonical metadata (workflow-manifest, repo-map, skill-registry, schemas).
+- `docs/` — architecture, product direction, specs, and runbooks.
+- `src/agent_runtime/` — 19 Python modules, 396 unit tests, 100% test coverage.
+- `frontend/src/` — Vite/React/TypeScript scaffold with typed API client,
+  hooks, a control-center page, and four agent components.
+- `tests/unit/` — 396 passing unit tests covering all backend modules.
+- `scripts/` — metadata validation and hygiene helpers.
 
-The current architecture is best understood as four layers:
+## Current Architecture
 
-1. A workflow-governance layer in `.github/` that defines instructions,
-	prompts, agents, approval hooks, and canonical metadata.
-2. A documentation and planning layer in `docs/`, `specs/`, `openspec/`, and
-	`.specify/` that captures requirements, process, and repo operating rules.
-3. A maintenance layer in `scripts/` that validates metadata and supports repo
-	hygiene.
-4. Reserved application areas in `src/`, `frontend/`, `tests/`, and `deploy/`
-	for project-specific runtime code once a concrete product direction is chosen.
+The architecture has four layers:
 
-## Current Constraints
+### 1. Workflow-governance layer (`/.github/`)
+Defines instructions, prompts, agents, approval hooks, and canonical metadata.
+This layer is the policy kernel — it routes tasks, registers skills, and
+governs the orchestration contract.
 
-This snapshot does not currently contain a validated backend or frontend
-runtime. As a result:
-- CI and task automation should stay scoped to repo hygiene and metadata checks
-- docs must not claim concrete API, UI, or deployment behavior
-- product-domain naming should remain generic until real application code exists
+### 2. Documentation and planning layer (`/docs/`, `/specs/`, `/openspec/`)
+Captures requirements, specs, process, and repo operating rules.  Active specs
+in `docs/specs/active/` are the single source of truth for in-flight work.
+
+### 3. Runtime engine (`/src/agent_runtime/`)
+A pure-Python agent runtime with strict module boundaries (see ADR-001).
+
+| Module | Responsibility |
+|---|---|
+| `schemas.py` | All Pydantic DTOs — foundational, no intra-package imports |
+| `state_machine.py` | Immutable task lifecycle transitions |
+| `events.py` | Typed event envelope for UI and audit consumers |
+| `observability.py` | Structured logging with correlation field injection |
+| `tool_router.py` | Policy-driven tool call classification |
+| `planner.py` | DAG plan assembly with cycle detection |
+| `executor.py` | Idempotent step execution with terminal deduplication |
+| `validator.py` | Confidence-scored evaluation with structured findings |
+| `learning.py` | Evidence-threshold pattern extraction from run artifacts |
+| `memory_service.py` | Scoped in-memory entry storage and retrieval |
+| `artifacts.py` | Run artifact persistence (in-memory, upsert semantics) |
+| `routes.py` | FastAPI router — thin task lifecycle API endpoints |
+| `app.py` | ASGI application factory — mounts CORS middleware, route router, and Temporal worker lifespan |
+| `temporal_runner.py` | Temporal workflow definition — deterministic plan execution with `workflow.uuid4()` |
+| `temporal_worker.py` | Temporal worker factory — registers workflow and activity types for the runtime worker |
+| `persistence.py` | Pluggable run-artifact persistence layer with in-memory and file-backed backends |
+| `session.py` | Session-scoped factory for runtime service composition |
+| `config.py` | Environment-driven configuration with default values and validation |
+
+### 4. Operator frontend (`/frontend/`)
+A React 19 / TypeScript / Vite 8 SPA that lets operators inspect and
+control the runtime.  No API calls in components; all data flows through
+typed hooks and API helpers.
+
+| Area | Contents |
+|---|---|
+| `src/types/agentRuntime.ts` | TypeScript interfaces mirroring backend schemas |
+| `src/api/agentRuntime.ts` | One typed function per API endpoint |
+| `src/hooks/useTaskStream.ts` | SSE event-stream subscription hook |
+| `src/hooks/useTaskCommands.ts` | Mutation helpers (createTask, transition, plan) |
+| `src/pages/AgentControlCenter.tsx` | Task queue page with new-task form |
+| `src/components/agent/TaskCard.tsx` | Task summary with state badge |
+| `src/components/agent/PlanViewer.tsx` | DAG plan step list with status |
+| `src/components/agent/TraceTimeline.tsx` | Chronological event stream |
+| `src/components/agent/ApprovalPanel.tsx` | Approve / deny operator controls |
+
+## API Surface
+
+All routes are under `/api` and backed by the `RuntimeStore` (in-memory;
+overridable via FastAPI DI for testing).
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/tasks` | Create task (PENDING) — 201 |
+| `GET` | `/api/tasks` | List all tasks — 200 |
+| `GET` | `/api/tasks/{id}` | Get task — 200 / 404 |
+| `POST` | `/api/tasks/{id}/transitions` | Advance state — 200 / 404 / 422 |
+| `POST` | `/api/tasks/{id}/plan` | Attach validated plan — 201 / 404 / 422 |
+| `GET` | `/api/tasks/{id}/plan` | Get plan — 200 / 404 |
+| `GET` | `/api/tasks/{id}/events` | Stream task events as SSE — 200 / 404 |
 
 ## Documentation Rules
 
-Docs in this repository should avoid inventing runtime capabilities, including:
-- API endpoints
-- database schemas
-- UI routes
-- deployment contracts
-- product-domain entities
+- Every claim in this file must be traceable to verified code or a spec in
+  `docs/specs/`.
+- When a new API endpoint is added, update the API Surface table above.
+- ADRs for major decisions live in `docs/architecture/decisions/`.
 
-## Source Of Truth
+## Source of Truth
 
-Use these pages first:
-- `docs/product-direction.md`
-- `docs/specs/active/product-realignment-phase-1.md`
-- `docs/runbooks/agent-mode.md`
+- `docs/product-direction.md` — product and direction guidance
+- `docs/specs/active/` — in-flight requirements
+- `docs/architecture/decisions/` — binding architectural decisions
+- `docs/runbooks/agent-mode.md` — operational runbook
 
-Treat inherited or archived product-specific material as historical reference
-only.

@@ -1,0 +1,15 @@
+{
+  "id": "api-contract-drift",
+  "title": "Detect and report OpenAPI contract drift after backend change",
+  "taskClass": "brownfield-improvement",
+  "prompt": "A new POST /projects endpoint was added to src/main.py but the frontend TypeScript types were not regenerated. Run the API contract checker, identify the drift, and output the commands needed to regenerate the types and update the snapshot.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "skip",
+    "skill_triggered": ["observability-inject"],
+    "adversarial_triggered": "skip",
+    "notes": "Contract drift scenario. observability-inject skill is relevant. Should use contract_check.py."
+  },
+  "tags": ["brownfield", "backend", "frontend", "api", "contract"]
+}

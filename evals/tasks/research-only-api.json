@@ -1,0 +1,14 @@
+{
+  "id": "research-only-api",
+  "title": "Research best practice for SSE reconnection in FastAPI",
+  "taskClass": "research-only",
+  "prompt": "What is the recommended pattern for Server-Sent Events reconnection handling in FastAPI? I want to understand retry intervals, event IDs, and client reconnection logic. Do not write any code.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "advisory",
+    "spec_created": "forbidden",
+    "adversarial_triggered": "skip",
+    "notes": "Research-only. The orchestrator must not write code or create specs."
+  },
+  "tags": ["research", "backend", "sse"]
+}

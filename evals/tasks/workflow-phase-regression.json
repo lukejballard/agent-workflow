@@ -1,0 +1,15 @@
+{
+  "id": "workflow-phase-regression",
+  "title": "Fix premature edit during classify phase",
+  "taskClass": "brownfield-improvement",
+  "prompt": "The orchestrator is writing files while still in the classify phase. Gate 5 in the pretool hook is firing. Investigate why the session phase is not being advanced to breadth-scan before edits start, and fix the phase transition logic.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "advisory",
+    "skill_triggered": ["debug-timeline-capture"],
+    "adversarial_triggered": "advisory",
+    "notes": "Should trigger debug-timeline-capture skill. Phase gate investigation requires phase FSM knowledge."
+  },
+  "tags": ["brownfield", "backend", "bug", "agent-runtime", "phases", "bugfix"]
+}

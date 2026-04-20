@@ -1,0 +1,14 @@
+{
+  "id": "docs-only-update",
+  "title": "Update docs/architecture.md after adding a new module",
+  "taskClass": "docs-only",
+  "prompt": "Update the module table in docs/architecture.md to document the new rate_limiter.py module that was added to src/agent_runtime/. Do not change any code.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "skip",
+    "spec_created": "forbidden",
+    "adversarial_triggered": "skip",
+    "notes": "Docs-only. No adversarial review required. No spec creation."
+  },
+  "tags": ["docs-only", "docs"]
+}

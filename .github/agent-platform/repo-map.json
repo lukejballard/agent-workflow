@@ -76,6 +76,9 @@
       ],
       "tests": [
         "tests/"
+      ],
+      "observedAdditionalPaths": [
+        "src/agent_runtime/"
       ]
     },
     {
@@ -102,6 +105,35 @@
       "tests": [
         "frontend/src/__tests__/",
         "frontend/tests/"
+      ],
+      "knownSubpaths": [
+        {
+          "path": "frontend/src/api/",
+          "role": "Typed API helpers"
+        },
+        {
+          "path": "frontend/src/components/",
+          "role": "Shared and reusable UI components"
+        },
+        {
+          "path": "frontend/src/hooks/",
+          "role": "Custom hooks for data loading and derived state"
+        },
+        {
+          "path": "frontend/src/pages/",
+          "role": "Top-level page components mounted by the router"
+        },
+        {
+          "path": "frontend/src/types/",
+          "role": "Shared TypeScript interfaces mirroring API responses"
+        },
+        {
+          "path": "frontend/src/__tests__/",
+          "role": "Vitest unit and component tests"
+        }
+      ],
+      "observedAdditionalPaths": [
+        "frontend/src/test/"
       ]
     },
     {
@@ -163,6 +195,8 @@
         ".github/agent-platform/repo-map.json"
       ],
       "verifyWith": [
+        "pytest tests/ -v",
+        "pytest tests/unit/ --cov=src --cov-report=term-missing",
         "ruff check src/",
         "python -m mypy src/"
       ]
@@ -176,7 +210,10 @@
         "frontend/AGENTS.md",
         ".github/agent-platform/repo-map.json"
       ],
-      "verifyWith": []
+      "verifyWith": [
+        "cd frontend && npm run lint",
+        "cd frontend && npm run test"
+      ]
     },
     {
       "whenPathMatches": [
@@ -188,6 +225,8 @@
         ".github/agent-platform/repo-map.json"
       ],
       "verifyWith": [
+        "pytest tests/ -v",
+        "pytest tests/unit/ --cov=src --cov-report=term-missing",
         "ruff check src/",
         "python -m mypy src/"
       ]
@@ -221,10 +260,15 @@
   ],
   "verificationRoutes": {
     "backend": [
+      "pytest tests/ -v",
+      "pytest tests/unit/ --cov=src --cov-report=term-missing",
       "ruff check src/",
       "python -m mypy src/"
     ],
-    "frontend": [],
+    "frontend": [
+      "cd frontend && npm run lint",
+      "cd frontend && npm run test"
+    ],
     "contracts": [
       "python scripts/agent/sync_agent_platform.py --check"
     ],

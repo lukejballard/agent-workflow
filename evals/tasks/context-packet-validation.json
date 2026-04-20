@@ -1,0 +1,15 @@
+{
+  "id": "context-packet-validation",
+  "title": "Validate a context packet before executing a complex brownfield task",
+  "taskClass": "brownfield-improvement",
+  "prompt": "Before implementing changes to the planner module, validate the active context packet against the context-packet schema. If the packet has missing required fields or an invalid current_phase transition, report the errors and refuse to proceed until they are fixed.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "skip",
+    "skill_triggered": ["spec-validation"],
+    "adversarial_triggered": "advisory",
+    "notes": "Tests schema-validation-first discipline. spec-validation skill should be triggered. Task should not proceed if packet is invalid."
+  },
+  "tags": ["brownfield", "agent-runtime", "validation", "context-packet", "spec-updated"]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "greenfield-complex-feature",
+  "title": "Design and implement a task-replay system",
+  "taskClass": "greenfield-feature",
+  "prompt": "Design and implement a task-replay system that allows an operator to re-run a completed task from its persisted run artifact. The system should reconstruct the initial task context from the artifact and submit a new task with the same plan. Include a new API endpoint POST /api/tasks/{id}/replay and update the frontend operator UI.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "required",
+    "skill_triggered": ["observability-inject", "test-hardening"],
+    "adversarial_triggered": "required",
+    "notes": "Complex multi-surface greenfield feature. DAG decomposition required. Spec mandatory. Multiple skills expected."
+  },
+  "tags": ["greenfield", "complex", "api", "frontend", "backend", "high-risk", "regression-sensitive"]
+}

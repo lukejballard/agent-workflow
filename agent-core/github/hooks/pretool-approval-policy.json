@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "windows": "python .github\\hooks\\hooks.py pretool",
+        "linux": "python3 .github/hooks/hooks.py pretool",
+        "osx": "python3 .github/hooks/hooks.py pretool",
+        "timeout": 15
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "windows": "python .github\\hooks\\hooks.py posttool",
+        "linux": "python3 .github/hooks/hooks.py posttool",
+        "osx": "python3 .github/hooks/hooks.py posttool",
+        "timeout": 5
+      }
+    ]
+  }
+}

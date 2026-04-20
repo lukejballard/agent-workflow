@@ -1,22 +1,21 @@
 # Architecture Notes
 
-This directory should hold durable architecture references for the repository and
-for any future application runtime that is added to it.
+This directory holds durable architecture references for the repository and
+for the agent runtime implemented under `src/agent_runtime/`.
 
 ## Current Status
 
-The current repo snapshot does not include the verified backend or frontend runtime trees,
-so architecture documentation must stay conservative and source only from what is present
-in the workspace.
+The repository has a verified Python backend runtime (`src/agent_runtime/`) —
+19 modules, 396 unit tests, 100% coverage — and a React/TypeScript operator
+frontend under `frontend/`.
 
 ## Use These Documents First
 
-- `docs/architecture.md` for the current architectural summary
-- `docs/product-direction.md` for repo framing
-- `docs/specs/active/product-realignment-phase-1.md` for the active realignment scope
+- `docs/architecture.md` for the current architectural summary.
+- `docs/product-direction.md` for repo framing.
+- `docs/architecture/decisions/` for accepted ADRs.
 
-## Historical Material
+## Architecture Decision Records
 
-Older ADRs and inherited planning references may still be useful for context, but they do
-not define the current repository or application architecture unless they are explicitly adopted into a new
-working spec.
+ADRs capture durable architectural choices. New ADRs should follow the format
+in `docs/architecture/decisions/` and be referenced from `docs/architecture.md`.

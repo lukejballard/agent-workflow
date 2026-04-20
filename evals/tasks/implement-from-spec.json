@@ -1,0 +1,15 @@
+{
+  "id": "implement-from-spec",
+  "title": "Implement Phase 1 from an already-approved spec",
+  "taskClass": "implement-from-existing-spec",
+  "prompt": "Implement Phase 1 of the eval harness as described in docs/specs/active/eval-harness-tier-3b.md. Do not create a new spec — use the existing one. Implement only the schema and dry-run infrastructure described in the Phase 1 section.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "forbidden",
+    "skill_triggered": ["test-hardening"],
+    "adversarial_triggered": "advisory",
+    "notes": "Implement-from-spec. Must read the existing spec, not create a new one. Spec creation is forbidden."
+  },
+  "tags": ["implement-from-spec", "evals", "backend", "regression-sensitive"]
+}

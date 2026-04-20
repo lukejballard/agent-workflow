@@ -4,7 +4,7 @@
   "createdAtUtc": "2026-04-12T18:00:00Z",
   "taskClass": "brownfield-improvement",
   "objective": "Repair the PR quality gate after a malformed workflow edit introduced duplicated YAML.",
-  "linkedSpec": "docs/specs/active/agent-runtime-hardening-phase-1.md",
+  "linkedSpec": "docs/specs/done/agent-runtime-hardening-phase-1.md",
   "linkedResearch": [
     "docs/specs/research/agent-architecture-benchmark-research.md"
   ],

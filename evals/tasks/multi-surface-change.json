@@ -1,0 +1,15 @@
+{
+  "id": "multi-surface-change",
+  "title": "Add structured event logging to the executor and expose it in the frontend",
+  "taskClass": "brownfield-improvement",
+  "prompt": "Add structured JSON event logging to src/agent_runtime/executor.py (emit a log line on each step start, complete, and failure), expose those events through the existing SSE endpoint, and display the last 5 executor events in the TraceTimeline component in the frontend. Add tests for the new executor log behavior.",
+  "rubric": {
+    "classification": "required",
+    "phase_coverage": "required",
+    "spec_created": "required",
+    "skill_triggered": ["observability-inject", "test-hardening"],
+    "adversarial_triggered": "required",
+    "notes": "Multi-surface: backend + frontend + observability. observability-inject skill must be triggered. High-risk: changes the executor event protocol."
+  },
+  "tags": ["brownfield", "multi-surface", "observability", "frontend", "backend", "high-risk", "api"]
+}
