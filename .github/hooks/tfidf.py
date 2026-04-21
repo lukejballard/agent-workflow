@@ -113,7 +113,7 @@ class TFIDFIndex:
             for index in range(len(self._docs))
         ]
         scored.sort(key=lambda item: item[0], reverse=True)
-        return [self._docs[index] for score, index in scored[:top_k] if score > 0.0]
+        return [self._docs[index] for score, index in scored[:top_k] if score > 0.1]
 
 
 def get_cached_index(

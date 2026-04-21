@@ -154,7 +154,7 @@ def get_relevant_memory(topic: str, top_k: int = 3) -> str:
         index = get_cached_index(
             f"memory:{_memory_path()}",
             flat_entries,
-            ["summary", "next_step_hint", "decisions", "facts_learned", "corrections_applied"],
+            ["summary", "next_step_hint", "decisions", "facts_learned", "assumptions_made", "corrections_applied"],
         )
         matches = index.search(topic, top_k=top_k)
     except ImportError:
