@@ -13,6 +13,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from session_io_support import default_session_path
+
 MEMORY_LIST_FIELDS = (
     "facts_learned",
     "assumptions_made",
@@ -21,19 +23,11 @@ MEMORY_LIST_FIELDS = (
 
 
 def _log_path() -> Path:
-    session = os.environ.get(
-        "AGENT_SESSION_FILE",
-        str(Path.home() / ".agent-session" / "session.json"),
-    )
-    return Path(session).with_suffix(".log.jsonl")
+    return Path(default_session_path()).with_suffix(".log.jsonl")
 
 
 def _memory_path() -> Path:
-    session = os.environ.get(
-        "AGENT_SESSION_FILE",
-        str(Path.home() / ".agent-session" / "session.json"),
-    )
-    return Path(session).with_suffix(".memory.jsonl")
+    return Path(default_session_path()).with_suffix(".memory.jsonl")
 
 
 def append_log(
