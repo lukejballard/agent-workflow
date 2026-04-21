@@ -82,6 +82,130 @@ def _memory_payload(state: Any) -> dict[str, Any]:
 _PATH_KEYS: tuple[str, ...] = ("filePath", "file_path", "path", "filename", "uri")
 
 
+# Task-class sets shared with pretool gate registry. Duplicated here to avoid
+# a runtime import cycle (gate_registry imports several posttool support funcs).
+REQUIRES_LOCK_TASK_CLASSES: frozenset[str] = frozenset(
+    {
+        "brownfield-improvement",
+        "greenfield-feature",
+        "implement-from-existing-spec",
+    }
+)
+LOW_CONFIDENCE_THRESHOLD = 0.4
+
+# Cap so prevention_pattern stays readable in failure-index records and TF-IDF
+# results don't get overwhelmed by a single long entry.
+_PREVENTION_PATTERN_MAX_LEN = 200
+
+
+def _infer_failure_context(state: Any) -> tuple[str, str]:
+    """Derive ``(root_cause, prevention_pattern)`` from session state.
+
+    The branches are mutually exclusive and ordered by signal strength:
+    explicit critique FAILs > requirements gap > low confidence > unknown.
+    """
+    fail_results = [r for r in state.critique_results if r.verdict == "FAIL"]
+    if fail_results:
+        ids = ", ".join(r.check_id for r in fail_results) or "(no ids)"
+        root_cause = f"Critique checks failed: {ids}"
+        prevention = "Resolve critique FAILs before advancing to verification"
+        return root_cause, prevention[:_PREVENTION_PATTERN_MAX_LEN]
+
+    if (
+        not state.requirements_locked
+        and state.task_class in REQUIRES_LOCK_TASK_CLASSES
+    ):
+        return (
+            "Requirements not locked before execution",
+            (
+                "Always lock requirements before coding for "
+                "brownfield/greenfield tasks"
+            )[:_PREVENTION_PATTERN_MAX_LEN],
+        )
+
+    confidence = float(getattr(state, "confidence", 1.0))
+    if confidence < LOW_CONFIDENCE_THRESHOLD:
+        return (
+            f"Low confidence ({confidence:.2f}) at block",
+            (
+                "Escalate to user when confidence < 0.4 before making edits"
+            )[:_PREVENTION_PATTERN_MAX_LEN],
+        )
+
+    return (
+        f"Unknown block at phase '{state.current_phase}'",
+        "",
+    )
+
+
+# Task 4 — Research brief auto-trigger -----------------------------------------
+
+_RESEARCH_BRIEF_TASK_CLASSES: frozenset[str] = frozenset(
+    {
+        "greenfield-feature",
+        "brownfield-improvement",
+        "implement-from-existing-spec",
+    }
+)
+_RESEARCH_BRIEF_PHASE_MIN = "choose-approach"
+_RESEARCH_BRIEF_LARGE_WRITE_THRESHOLD = 5000
+_RESEARCH_BRIEF_DIR_FRAGMENT = "docs/specs/research/"
+
+
+def _is_external_read_path(path: str) -> bool:
+    """Return True for paths that look like fetched-external context.
+
+    Excludes ``.github/`` so internal bootstrap reads never trip the trigger.
+    """
+    norm = path.replace("\\", "/").lower()
+    if norm.startswith(".github/"):
+        return False
+    if "/fetch/" in norm or norm.startswith("fetch/"):
+        return True
+    if "http" in norm:
+        return True
+    return False
+
+
+def _should_require_research_brief(
+    state: Any, tool_name: str, tool_input: dict[str, Any]
+) -> bool:
+    """Decide whether to auto-set ``state.research_brief_required = True``.
+
+    Two trigger conditions:
+
+    1. The current task class needs a brief, the workflow has reached
+       ``choose-approach`` or later, and at least one previously-recorded
+       read path looks external (``fetch/`` or contains ``http``) while not
+       being a ``.github/`` bootstrap file.
+    2. A large write (``content`` field > 5000 chars) was just made under
+       ``docs/specs/research/`` (the brief itself).
+
+    The function is read-only — callers flip the flag.
+    """
+    if state.task_class not in _RESEARCH_BRIEF_TASK_CLASSES:
+        return False
+
+    # Trigger 2 — large research write counts even if phase is early.
+    if tool_name in EDIT_TOOL_NAMES:
+        content = tool_input.get("content")
+        path = _extract_path(tool_input) or ""
+        norm_path = path.replace("\\", "/").lower()
+        if (
+            isinstance(content, str)
+            and len(content) > _RESEARCH_BRIEF_LARGE_WRITE_THRESHOLD
+            and _RESEARCH_BRIEF_DIR_FRAGMENT in norm_path
+        ):
+            return True
+
+    # Trigger 1 — external read after planning has begun.
+    current_idx = PHASE_INDEX.get(state.current_phase, -1)
+    min_idx = PHASE_INDEX.get(_RESEARCH_BRIEF_PHASE_MIN, 0)
+    if current_idx < min_idx:
+        return False
+    return any(_is_external_read_path(p) for p in state.read_files)
+
+
 def _normalise(raw: str) -> str:
     return raw.replace("\\", "/").lower().rstrip("/")
 
@@ -182,6 +306,38 @@ def main() -> int:
     record_read(tool_name, tool_input, state)
     first_edit = record_edit(tool_name, state)
 
+    # Task 4 — auto-set research_brief_required when policy conditions trigger.
+    # Only flip from False to True; reset_for_new_task is the single point of
+    # clearing the flag.
+    if not state.research_brief_required and _should_require_research_brief(
+        state, tool_name, tool_input
+    ):
+        state.research_brief_required = True
+        append_log(
+            "research_brief_required_auto",
+            {
+                "task_class": state.task_class,
+                "phase": state.current_phase,
+                "tool": tool_name,
+            },
+        )
+
+    # Task 4 — auto-set research_brief_required when policy conditions trigger.
+    # Only flip from False to True; reset_for_new_task is the single point of
+    # clearing the flag.
+    if not state.research_brief_required and _should_require_research_brief(
+        state, tool_name, tool_input
+    ):
+        state.research_brief_required = True
+        append_log(
+            "research_brief_required_auto",
+            {
+                "task_class": state.task_class,
+                "phase": state.current_phase,
+                "tool": tool_name,
+            },
+        )
+
     if not state.bootstrap_complete and is_bootstrap_complete(state.read_files):
         state.bootstrap_complete = True
         append_log("bootstrap_complete", {
@@ -195,22 +351,7 @@ def main() -> int:
             old = state.current_phase
             state.current_phase = detected
             state.phase_index = PHASE_INDEX[detected]
-            state.phase_history.append({
-                "from": old, "to": detected,
-                "auto": True, "at_tool_call": state.tool_call_count,
-                "ts": time.time(),
-            })
-            append_log("phase_auto_advance", {
-                "from": old, "to": detected, "tool": tool_name,
-            })
-        else:
-            append_log("phase_advisory", {
-                "current": state.current_phase,
-                "suggested": detected,
-                "tool": tool_name,
-            })
-
-    if state.verification_status == "blocked" and old_verification != "blocked":
+        root_cause, prevention_pattern = _infer_failure_context(state)
         failure = FailureIndex().write(
             task_class=state.task_class or "unknown",
             phase_at_failure=state.current_phase,
@@ -218,8 +359,25 @@ def main() -> int:
                 f"Session blocked at phase '{state.current_phase}' after "
                 f"{state.edit_count} edits and {state.tool_call_count} tool calls."
             ),
-            root_cause="",
-            prevention_pattern="",
+            root_cause=root_cause,
+            prevention_pattern=prevention_pattern
+            append_log("phase_advisory", {
+                "current": state.current_phase,
+                "suggested": detected,
+                "tool": tool_name,
+            })
+
+    if state.verification_status == "blocked" and old_verification != "blocked":
+        root_cause, prevention_pattern = _infer_failure_context(state)
+        failure = FailureIndex().write(
+            task_class=state.task_class or "unknown",
+            phase_at_failure=state.current_phase,
+            symptom=(
+                f"Session blocked at phase '{state.current_phase}' after "
+                f"{state.edit_count} edits and {state.tool_call_count} tool calls."
+            ),
+            root_cause=root_cause,
+            prevention_pattern=prevention_pattern,
             task_summary=state.scope_justification,
         )
         state.failure_log.append(

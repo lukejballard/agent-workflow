@@ -1,8 +1,9 @@
 """Token budget estimator for the agent hook system.
 
-Uses a character-count heuristic (chars / 4) as an approximation.
-This is intentionally simple because the hook environment has no external
-dependencies. For a production system, replace this with tiktoken.
+Prefers ``tiktoken`` (cl100k_base) when installed for accurate counts; falls
+back to a character-count heuristic (``chars // 4``) when tiktoken is missing
+or raises. The fallback path is intentionally dependency-free so the hook
+environment continues to work in stripped-down installs.
 """
 from __future__ import annotations
 
@@ -22,9 +23,29 @@ def get_budget() -> int:
 DEFAULT_BUDGET = get_budget()
 
 
+def _tiktoken_available() -> bool:
+    """Return True if tiktoken can be imported. Used by tests."""
+    try:
+        import tiktoken  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
 def estimate_tokens(text: str) -> int:
-    """Estimate token count from character count. Approximation only."""
-    return max(1, len(text) // CHARS_PER_TOKEN)
+    """Estimate token count for ``text``.
+
+    Uses ``tiktoken.get_encoding("cl100k_base")`` when available. Any
+    failure (missing dependency, encoding error, etc.) falls through to the
+    char/4 heuristic so the caller never raises.
+    """
+    try:
+        import tiktoken
+
+        enc = tiktoken.get_encoding("cl100k_base")
+        return max(1, len(enc.encode(text)))
+    except (ImportError, Exception):  # noqa: BLE001 - intentional broad fallback
+        return max(1, len(text) // CHARS_PER_TOKEN)
 
 
 def get_session_token_usage(state: SessionState) -> int:
@@ -64,9 +85,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="token_budget.py")
     parser.add_argument("--estimate", help="Estimate tokens for a string")
     args = parser.parse_args(argv)
+    backend = "tiktoken (cl100k_base)" if _tiktoken_available() else "fallback (chars/4)"
     if args.estimate is None:
+        print(f"backend: {backend}")
         parser.print_usage()
         return 0
+    print(f"backend: {backend}")
     print(estimate_tokens(args.estimate))
     return 0
 

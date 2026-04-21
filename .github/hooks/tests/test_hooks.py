@@ -995,3 +995,208 @@ def test_richer_memory_write_on_verify_entry(session_path, monkeypatch, tmp_path
     )
     memories = _read_memory()
     assert any(m.get("facts_learned") for m in memories), "Expected facts_learned in memory"
+
+
+# ---------------------------------------------------------------------------
+# Hardening sprint tests
+# ---------------------------------------------------------------------------
+
+# Task 1 — CritiqueCompletenessGate
+def test_critique_completeness_blocks_when_empty_in_verify(session_path, monkeypatch):
+    _write_state(
+        session_path,
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+        requirements_locked=True,
+        critique_results=[],
+    )
+    _, output = _run_hook(
+        pretool,
+        {"tool_name": "edit_file", "tool_input": {"filePath": "src/main.py"}},
+        monkeypatch,
+    )
+    assert _decision(output) == "ask"
+    assert "Critique results are empty" in _reason(output)
+
+
+def test_critique_completeness_passes_with_results_in_verify(session_path, monkeypatch):
+    _write_state(
+        session_path,
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+        requirements_locked=True,
+        critique_results=[CritiqueResult("x", "PASS", "ok")],
+    )
+    _, output = _run_hook(
+        pretool,
+        {"tool_name": "edit_file", "tool_input": {"filePath": "src/main.py"}},
+        monkeypatch,
+    )
+    assert output == {"continue": True}
+
+
+def test_critique_completeness_passes_outside_verify(session_path, monkeypatch):
+    _write_state(
+        session_path,
+        current_phase="execute-or-answer",
+        task_class="brownfield-improvement",
+        requirements_locked=True,
+        critique_results=[],
+    )
+    _, output = _run_hook(
+        pretool,
+        {"tool_name": "edit_file", "tool_input": {"filePath": "src/main.py"}},
+        monkeypatch,
+    )
+    assert output == {"continue": True}
+
+
+# Task 2 — tiktoken
+def test_tiktoken_available_returns_bool():
+    from token_budget import _tiktoken_available
+    assert isinstance(_tiktoken_available(), bool)
+
+
+def test_estimate_tokens_returns_positive_for_typical_text():
+    from token_budget import _tiktoken_available, estimate_tokens
+    sample = "def hello():\n    return 'world'"
+    value = estimate_tokens(sample)
+    assert isinstance(value, int)
+    assert value > 0
+    if not _tiktoken_available():
+        # Fallback path: exact char/4 math.
+        assert value == max(1, len(sample) // 4)
+
+
+# Task 3 — _infer_failure_context
+def test_infer_failure_context_critique_fail_branch():
+    state = _state(
+        critique_results=[
+            CritiqueResult("security-review", "FAIL", "secret leaked"),
+            CritiqueResult("test-coverage", "PASS", "ok"),
+        ],
+    )
+    rc, prev = posttool._infer_failure_context(state)
+    assert "security-review" in rc
+    assert "Critique" in rc
+    assert prev.startswith("Resolve critique FAILs")
+    assert len(prev) <= 200
+
+
+def test_infer_failure_context_requirements_branch():
+    state = _state(
+        task_class="brownfield-improvement",
+        requirements_locked=False,
+        critique_results=[],
+    )
+    rc, prev = posttool._infer_failure_context(state)
+    assert "Requirements not locked" in rc
+    assert "lock requirements" in prev.lower()
+
+
+def test_infer_failure_context_low_confidence_branch():
+    state = _state(
+        task_class="brownfield-improvement",
+        requirements_locked=True,
+        confidence=0.2,
+        critique_results=[],
+    )
+    rc, prev = posttool._infer_failure_context(state)
+    assert "Low confidence" in rc
+    assert "0.20" in rc
+    assert "Escalate" in prev
+
+
+def test_infer_failure_context_unknown_branch():
+    state = _state(
+        task_class="trivial",
+        requirements_locked=True,
+        confidence=1.0,
+        current_phase="execute-or-answer",
+        critique_results=[],
+    )
+    rc, prev = posttool._infer_failure_context(state)
+    assert "Unknown block" in rc
+    assert "execute-or-answer" in rc
+    assert prev == ""
+
+
+# Task 4 — _should_require_research_brief
+def test_research_brief_auto_triggered_on_external_read(session_path, monkeypatch):
+    state = _state(
+        task_class="brownfield-improvement",
+        current_phase="choose-approach",
+        read_files=["fetch/external-doc.html", "README.md"],
+    )
+    assert posttool._should_require_research_brief(
+        state, "read_file", {"filePath": "fetch/external-doc.html"}
+    )
+
+
+def test_research_brief_auto_triggered_on_large_research_write(session_path, monkeypatch):
+    state = _state(
+        task_class="greenfield-feature",
+        current_phase="goal-anchor",
+        read_files=[],
+    )
+    big_content = "x" * 6000
+    assert posttool._should_require_research_brief(
+        state,
+        "create_file",
+        {"filePath": "docs/specs/research/new-brief.md", "content": big_content},
+    )
+
+
+def test_research_brief_not_triggered_for_trivial_task(session_path, monkeypatch):
+    state = _state(
+        task_class="trivial",
+        current_phase="execute-or-answer",
+        read_files=["fetch/external.html"],
+    )
+    assert not posttool._should_require_research_brief(
+        state, "read_file", {"filePath": "fetch/external.html"}
+    )
+
+
+def test_research_brief_not_triggered_on_internal_github_reads(session_path, monkeypatch):
+    state = _state(
+        task_class="brownfield-improvement",
+        current_phase="choose-approach",
+        read_files=[".github/agents/orchestrator.agent.md"],
+    )
+    assert not posttool._should_require_research_brief(
+        state, "read_file", {"filePath": ".github/agents/orchestrator.agent.md"}
+    )
+
+
+# Task 5 — _sanitize_additional_context
+def test_sanitize_strips_xml_tags():
+    from pretool_approval_policy import _sanitize_additional_context
+    out = _sanitize_additional_context("hello <script>alert('x')</script> world")
+    assert "<" not in out
+    assert ">" not in out
+    assert "hello" in out and "world" in out
+
+
+def test_sanitize_truncates_at_500_chars():
+    from pretool_approval_policy import _sanitize_additional_context
+    long_text = "a" * 1000
+    out = _sanitize_additional_context(long_text)
+    assert len(out) == 500
+
+
+def test_sanitize_passes_through_short_text():
+    from pretool_approval_policy import _sanitize_additional_context
+    assert _sanitize_additional_context("normal short prose.") == "normal short prose."
+
+
+def test_emit_pretool_decision_sanitizes_additional_context(monkeypatch):
+    import io
+    import json as _json
+    buf = io.StringIO()
+    monkeypatch.setattr(pretool.sys, "stdout", buf)
+    pretool.emit_pretool_decision(
+        "ask", "reason", additional_context="<b>bold</b> ok"
+    )
+    payload = _json.loads(buf.getvalue())
+    assert payload["hookSpecificOutput"]["additionalContext"] == "bold ok"
