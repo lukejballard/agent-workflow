@@ -6,7 +6,7 @@
       "expected": "ask",
       "actual": "ask",
       "passed": true,
-      "latency_ms": 74.86,
+      "latency_ms": 14.82,
       "error": ""
     },
     {
@@ -15,7 +15,7 @@
       "expected": "continue",
       "actual": "continue",
       "passed": true,
-      "latency_ms": 78.89,
+      "latency_ms": 14.14,
       "error": ""
     },
     {
@@ -24,7 +24,7 @@
       "expected": "ask",
       "actual": "ask",
       "passed": true,
-      "latency_ms": 96.44,
+      "latency_ms": 15.15,
       "error": ""
     },
     {
@@ -33,7 +33,7 @@
       "expected": "continue",
       "actual": "continue",
       "passed": true,
-      "latency_ms": 84.17,
+      "latency_ms": 13.53,
       "error": ""
     },
     {
@@ -42,7 +42,7 @@
       "expected": "ask",
       "actual": "ask",
       "passed": true,
-      "latency_ms": 73.83,
+      "latency_ms": 15.17,
       "error": ""
     },
     {
@@ -51,7 +51,7 @@
       "expected": "ask",
       "actual": "ask",
       "passed": true,
-      "latency_ms": 52.18,
+      "latency_ms": 7.44,
       "error": ""
     },
     {
@@ -60,7 +60,7 @@
       "expected": "deny",
       "actual": "deny",
       "passed": true,
-      "latency_ms": 90.23,
+      "latency_ms": 12.42,
       "error": ""
     },
     {
@@ -69,7 +69,7 @@
       "expected": "ask",
       "actual": "ask",
       "passed": true,
-      "latency_ms": 77.3,
+      "latency_ms": 14.18,
       "error": ""
     },
     {
@@ -78,7 +78,7 @@
       "expected": "ask",
       "actual": "ask",
       "passed": true,
-      "latency_ms": 95.14,
+      "latency_ms": 13.81,
       "error": ""
     },
     {
@@ -87,7 +87,7 @@
       "expected": "ask",
       "actual": "ask",
       "passed": true,
-      "latency_ms": 66.49,
+      "latency_ms": 13.81,
       "error": ""
     },
     {
@@ -96,7 +96,7 @@
       "expected": "ask",
       "actual": "ask",
       "passed": true,
-      "latency_ms": 80.55,
+      "latency_ms": 14.41,
       "error": ""
     }
   ],
@@ -105,6 +105,6 @@
   "passed": 11,
   "failed": 0,
   "regression_count": 0,
-  "mean_gate_latency_ms": 79.1,
-  "run_at": "2026-04-20T20:34:34.653547+00:00"
+  "mean_gate_latency_ms": 13.53,
+  "run_at": "2026-04-21T01:03:39.300369+00:00"
 }

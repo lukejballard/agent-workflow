@@ -189,7 +189,7 @@ def test_posttool_increments_edit_count(session_path, monkeypatch):
 def test_session_write_creates_file_atomically(session_path):
     assert write_session(SessionState(), str(session_path))
     assert not session_path.with_suffix(".tmp").exists()
-    assert json.loads(session_path.read_text(encoding="utf-8"))["schema_version"] == 4
+    assert json.loads(session_path.read_text(encoding="utf-8"))["schema_version"] == 6
 
 
 def test_concurrent_write_does_not_corrupt_session(session_path):
@@ -231,7 +231,7 @@ def test_session_state_defaults_validate_cleanly():
     assert SessionState().validate() == []
 
 
-def test_session_state_migrates_v2_to_v4():
+def test_session_state_migrates_v2_to_current():
     state = SessionState.from_dict(
         {
             "schema_version": 2,
@@ -249,12 +249,14 @@ def test_session_state_migrates_v2_to_v4():
             "last_updated": 0.0,
         }
     )
-    assert state.schema_version == 4
+    assert state.schema_version == 6
     assert state.subtask_attempt_counts == {}
     assert state.confidence == 1.0
     assert state.failure_log == []
     assert state.critique_results == []
     assert state.phase_token_costs == {}
+    assert state.closed_task_count_per_surface == {}
+    assert state.audit_due is False
 
 
 def test_declare_phase_advances_forward_only():
@@ -573,7 +575,7 @@ def test_estimated_tokens_used_defaults_to_zero():
     assert SessionState().estimated_tokens_used == 0
 
 
-def test_schema_v3_migrates_to_v4():
+def test_schema_v3_migrates_to_current():
     state = SessionState.from_dict(
         {
             "schema_version": 3,
@@ -594,14 +596,211 @@ def test_schema_v3_migrates_to_v4():
             "estimated_tokens_used": 10,
         }
     )
-    assert state.schema_version == 4
+    assert state.schema_version == 6
     assert state.critique_results == []
     assert state.phase_token_costs == {}
+    assert state.closed_task_count_per_surface == {}
 
 
-def test_schema_v4_roundtrips():
+def test_schema_current_roundtrips():
     original = SessionState().to_dict()
     assert SessionState.from_dict(original).to_dict() == original
+
+
+def test_schema_v4_migrates_to_current():
+    state = SessionState.from_dict(
+        {
+            "schema_version": 4,
+            "current_phase": "execute-or-answer",
+            "phase_index": PHASE_INDEX["execute-or-answer"],
+            "tool_call_count": 5,
+            "read_files": ["README.md"],
+            "allowed_paths": ["src/"],
+            "edit_count": 2,
+            "phase_history": [],
+            "bootstrap_complete": True,
+            "requirements_locked": True,
+            "verification_status": "pending",
+            "task_class": "brownfield-improvement",
+            "scope_justification": "v4 migration",
+            "subtask_attempt_counts": {},
+            "confidence": 0.9,
+            "failure_log": [],
+            "estimated_tokens_used": 100,
+            "critique_results": [],
+            "phase_token_costs": {"execute-or-answer": 100},
+        }
+    )
+    assert state.schema_version == 6
+    assert state.closed_task_count_per_surface == {}
+    assert state.last_audit_at_per_surface == {}
+    assert state.last_blocked_at == 0.0
+    assert state.audit_due is False
+    assert state.audit_due_reason == ""
+    assert state.verification_matrix_present is False
+    assert state.research_brief_required is False
+    assert state.validate() == []
+
+
+def test_schema_v5_migrates_to_current():
+    state = SessionState.from_dict(
+        {
+            "schema_version": 5,
+            "current_phase": "execute-or-answer",
+            "phase_index": PHASE_INDEX["execute-or-answer"],
+            "tool_call_count": 3,
+            "read_files": [],
+            "allowed_paths": [".github/"],
+            "edit_count": 1,
+            "phase_history": [],
+            "bootstrap_complete": True,
+            "requirements_locked": True,
+            "verification_status": "pending",
+            "task_class": "brownfield-improvement",
+            "scope_justification": "v5 migration",
+            "subtask_attempt_counts": {},
+            "confidence": 1.0,
+            "failure_log": [],
+            "estimated_tokens_used": 50,
+            "critique_results": [],
+            "phase_token_costs": {},
+            "closed_task_count_per_surface": {".github/": 2},
+            "last_audit_at_per_surface": {},
+            "last_blocked_at": 0.0,
+            "audit_due": False,
+            "audit_due_reason": "",
+            "verification_matrix_present": False,
+        }
+    )
+    assert state.schema_version == 6
+    assert state.research_brief_required is False
+    assert state.validate() == []
+
+
+def test_workspace_session_path_uses_git_root(tmp_path, monkeypatch):
+    """When .git exists in an ancestor, session resolves to workspace .agent-session/."""
+    import session_io_support as sio
+
+    git_root = tmp_path / "repo"
+    git_root.mkdir()
+    (git_root / ".git").mkdir()
+    hooks_dir = git_root / ".github" / "hooks"
+    hooks_dir.mkdir(parents=True)
+    # Patch __file__ to simulate running from hooks dir
+    monkeypatch.setattr(sio, "__file__", str(hooks_dir / "session_io_support.py"))
+    # Ensure env override is absent
+    monkeypatch.delenv("AGENT_SESSION_FILE", raising=False)
+    path = sio.default_session_path()
+    assert str(git_root / ".agent-session" / "session.json") == path
+
+
+def test_reset_for_new_task_preserves_durable_fields():
+    state = SessionState(
+        task_class="brownfield-improvement",
+        confidence=0.5,
+        critique_results=[CritiqueResult("x", "FAIL", "r")],
+        closed_task_count_per_surface={".github/": 7},
+        last_audit_at_per_surface={".github/": 1234.0},
+        last_blocked_at=999.0,
+        failure_log=[{"ts": 1.0}],
+        phase_history=[{"from": "goal-anchor", "to": "classify"}],
+        read_files=["README.md"],
+        bootstrap_complete=True,
+    )
+    state.reset_for_new_task("greenfield-feature", ["src/api/"])
+    assert state.task_class == "greenfield-feature"
+    assert state.allowed_paths == ["src/api/"]
+    assert state.confidence == 1.0
+    assert state.critique_results == []
+    assert state.requirements_locked is False
+    assert state.audit_due is False
+    assert state.current_phase == "goal-anchor"
+    # Durable fields preserved.
+    assert state.closed_task_count_per_surface == {".github/": 7}
+    assert state.last_audit_at_per_surface == {".github/": 1234.0}
+    assert state.last_blocked_at == 999.0
+    assert state.failure_log == [{"ts": 1.0}]
+    assert state.phase_history == [{"from": "goal-anchor", "to": "classify"}]
+    assert state.read_files == ["README.md"]
+    assert state.bootstrap_complete is True
+
+
+def test_sensitive_path_blocks_edit_to_audit_charter(session_path, monkeypatch):
+    _write_state(session_path, current_phase="execute-or-answer")
+    _, output = _run_hook(
+        pretool,
+        {
+            "tool_name": "edit_file",
+            "tool_input": {"filePath": "docs/runbooks/adversarial-audit.md"},
+        },
+        monkeypatch,
+    )
+    assert _decision(output) == "ask"
+    assert "Sensitive" in output["hookSpecificOutput"]["additionalContext"]
+
+
+def test_sensitive_path_blocks_edit_to_research_dir(session_path, monkeypatch):
+    _write_state(session_path, current_phase="execute-or-answer")
+    _, output = _run_hook(
+        pretool,
+        {
+            "tool_name": "edit_file",
+            "tool_input": {"filePath": "docs/specs/research/audit-x-20260101.md"},
+        },
+        monkeypatch,
+    )
+    assert _decision(output) == "ask"
+
+
+def test_audit_due_set_when_threshold_reached(session_path, monkeypatch):
+    monkeypatch.setenv("AGENT_AUDIT_TASK_THRESHOLD", "2")
+    state = _state(
+        current_phase="execute-or-answer",
+        task_class="brownfield-improvement",
+        read_files=[".github/hooks/foo.py"],
+        closed_task_count_per_surface={".github/": 1},
+    )
+    assert write_session(state, str(session_path))
+    write_session_snapshot(str(session_path))
+    later = _state(
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+        read_files=[".github/hooks/foo.py"],
+        closed_task_count_per_surface={".github/": 1},
+    )
+    assert write_session(later, str(session_path))
+    _, output = _run_hook(
+        posttool,
+        {"tool_name": "read_file", "tool_input": {"filePath": ".github/hooks/foo.py"}},
+        monkeypatch,
+    )
+    assert output == {"continue": True}
+    final = read_session(str(session_path))
+    assert final.audit_due is True
+    assert final.audit_due_reason == "cadence"
+
+
+def test_audit_due_set_when_blocked(session_path, monkeypatch, tmp_path):
+    failures_dir = tmp_path / "failures"
+    monkeypatch.setenv("AGENT_FAILURES_DIR", str(failures_dir))
+    _write_state(session_path, verification_status="pending")
+    write_session_snapshot(str(session_path))
+    _write_state(
+        session_path,
+        verification_status="blocked",
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+    )
+    _, output = _run_hook(
+        posttool,
+        {"tool_name": "read_file", "tool_input": {"filePath": "src/main.py"}},
+        monkeypatch,
+    )
+    assert output == {"continue": True}
+    final = read_session(str(session_path))
+    assert final.audit_due is True
+    assert final.audit_due_reason == "blocked"
+    assert final.last_blocked_at > 0
 
 
 def test_posttool_writes_failure_record_on_blocked_transition(
@@ -631,3 +830,168 @@ def test_posttool_writes_failure_record_on_blocked_transition(
 def test_failure_index_recent_handles_missing_dir(tmp_path):
     index = FailureIndex(tmp_path / "missing")
     assert index.recent() == []
+
+
+# ---------------------------------------------------------------------------
+# Phase-2 capability tests
+# ---------------------------------------------------------------------------
+
+def test_tool_call_deny_escalation(session_path, monkeypatch):
+    """After 2× MAX_TOOL_CALLS, the pretool emits 'deny' not 'ask'."""
+    import pretool_approval_policy as pretool_mod
+    hard_limit = pretool_mod.TOOL_CALL_DENY_THRESHOLD
+    _write_state(session_path, tool_call_count=hard_limit - 1)
+    _, output = _run_hook(
+        pretool,
+        {"tool_name": "read_file", "tool_input": {"filePath": "README.md"}},
+        monkeypatch,
+    )
+    assert _decision(output) == "deny"
+
+
+def test_research_brief_gate_blocks_when_required_and_missing(
+    session_path, monkeypatch, tmp_path
+):
+    """Posttool sets verification_status=blocked when research_brief_required but no briefs exist."""
+    import posttool_validator as pv
+
+    # Point workspace root to a tmp dir with no research briefs
+    fake_session = tmp_path / ".agent-session" / "session.json"
+    fake_session.parent.mkdir(parents=True)
+    monkeypatch.setenv("AGENT_SESSION_FILE", str(fake_session))
+    session_path = fake_session
+    # Set up previous phase as execute-or-answer, current as traceability-and-verify
+    prev = _state(
+        current_phase="execute-or-answer",
+        task_class="brownfield-improvement",
+        research_brief_required=True,
+    )
+    assert write_session(prev, str(session_path))
+    write_session_snapshot(str(session_path))
+    cur = _state(
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+        research_brief_required=True,
+    )
+    assert write_session(cur, str(session_path))
+
+    _, output = _run_hook(
+        posttool,
+        {"tool_name": "read_file", "tool_input": {"filePath": "README.md"}},
+        monkeypatch,
+    )
+    assert output == {"continue": True}
+    final = read_session(str(session_path))
+    assert final.verification_status == "blocked"
+
+
+def test_research_brief_gate_passes_when_brief_exists(
+    session_path, monkeypatch, tmp_path
+):
+    """Posttool does NOT block when research_brief_required and a brief file exists."""
+    fake_session = tmp_path / ".agent-session" / "session.json"
+    fake_session.parent.mkdir(parents=True)
+    monkeypatch.setenv("AGENT_SESSION_FILE", str(fake_session))
+    # Create a fake brief file
+    brief_dir = tmp_path / "docs" / "specs" / "research"
+    brief_dir.mkdir(parents=True)
+    (brief_dir / "audit-github-20260420.md").write_text("# Audit")
+
+    prev = _state(
+        current_phase="execute-or-answer",
+        task_class="brownfield-improvement",
+        research_brief_required=True,
+    )
+    assert write_session(prev, str(fake_session))
+    write_session_snapshot(str(fake_session))
+    cur = _state(
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+        research_brief_required=True,
+    )
+    assert write_session(cur, str(fake_session))
+
+    _, output = _run_hook(
+        posttool,
+        {"tool_name": "read_file", "tool_input": {"filePath": "README.md"}},
+        monkeypatch,
+    )
+    assert output == {"continue": True}
+    final = read_session(str(fake_session))
+    assert final.verification_status != "blocked"
+
+
+def test_task_close_resets_transient_state(session_path, monkeypatch, tmp_path):
+    """When verification_status transitions to 'verified', posttool resets transient state."""
+    fake_session = tmp_path / ".agent-session" / "session.json"
+    fake_session.parent.mkdir(parents=True)
+    monkeypatch.setenv("AGENT_SESSION_FILE", str(fake_session))
+
+    prev = _state(
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+        verification_status="in-progress",
+        edit_count=3,
+        tool_call_count=10,
+        closed_task_count_per_surface={".github/": 2},
+    )
+    assert write_session(prev, str(fake_session))
+    write_session_snapshot(str(fake_session))
+    cur = _state(
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+        verification_status="verified",
+        edit_count=3,
+        tool_call_count=10,
+        closed_task_count_per_surface={".github/": 2},
+    )
+    assert write_session(cur, str(fake_session))
+
+    _, output = _run_hook(
+        posttool,
+        {"tool_name": "read_file", "tool_input": {"filePath": "README.md"}},
+        monkeypatch,
+    )
+    assert output == {"continue": True}
+    final = read_session(str(fake_session))
+    # Transient fields reset
+    assert final.current_phase == "goal-anchor"
+    assert final.task_class == ""
+    assert final.edit_count == 0
+    assert final.tool_call_count == 0
+    # Durable fields preserved
+    assert final.closed_task_count_per_surface == {".github/": 2}
+
+
+def test_richer_memory_write_on_verify_entry(session_path, monkeypatch, tmp_path):
+    """A memory entry with facts_learned is written when entering traceability-and-verify."""
+    from session_log import read_memory as _read_memory
+
+    fake_session = tmp_path / ".agent-session" / "session.json"
+    fake_session.parent.mkdir(parents=True)
+    monkeypatch.setenv("AGENT_SESSION_FILE", str(fake_session))
+
+    critique = [CritiqueResult("security-review", "PASS", "No secrets found")]
+    prev = _state(
+        current_phase="execute-or-answer",
+        task_class="brownfield-improvement",
+        critique_results=critique,
+        allowed_paths=[".github/"],
+    )
+    assert write_session(prev, str(fake_session))
+    write_session_snapshot(str(fake_session))
+    cur = _state(
+        current_phase="traceability-and-verify",
+        task_class="brownfield-improvement",
+        critique_results=critique,
+        allowed_paths=[".github/"],
+    )
+    assert write_session(cur, str(fake_session))
+
+    _run_hook(
+        posttool,
+        {"tool_name": "read_file", "tool_input": {"filePath": "README.md"}},
+        monkeypatch,
+    )
+    memories = _read_memory()
+    assert any(m.get("facts_learned") for m in memories), "Expected facts_learned in memory"

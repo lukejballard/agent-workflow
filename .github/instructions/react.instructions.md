@@ -43,3 +43,18 @@ applyTo: "**/*.tsx,**/*.jsx"
 ## Styling
 - Match the existing CSS and component patterns already used in the host repo.
 - No inline styles except for truly dynamic values.
+
+## Elite tier — what good looks like
+- Use Suspense for streaming or code-split boundaries where the framework
+  supports it; do not roll a custom loading orchestrator.
+- Make data-fetching abortable: pass an `AbortSignal` from the effect's
+  cleanup or the route's lifecycle into every fetch.
+- Use `useTransition` (or the framework equivalent) to mark non-urgent
+  updates so input latency stays inside the INP budget defined in
+  `performance.instructions.md`.
+- Profile before memoizing. `React.memo`, `useMemo`, and `useCallback` are
+  not free; add them only after a profile shows the cost.
+- **Do not introduce Zustand, Jotai, Redux, or XState** as a new default.
+  Local state and Context cover the package-default surface; reach for a
+  global store only on explicit user requirement or established host-repo
+  evidence.

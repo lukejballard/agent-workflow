@@ -13,6 +13,8 @@
       "adversarial-critique",
       "revise",
       "execute-or-answer",
+      "self-review",
+      "critique",
       "traceability-and-verify"
     ],
     "maxCritiquePasses": 2,
@@ -80,6 +82,15 @@
       "requireProvenance": true,
       "preferFreshEvidence": true,
       "ignoreStaleOrUnverified": true
+    },
+    "failureKnowledge": {
+      "store": ".github/hooks/failures/",
+      "writer": ".github/hooks/failure_index.py",
+      "queryAtBootstrap": true
+    },
+    "decisionKnowledge": {
+      "store": "docs/specs/research/",
+      "writePolicy": "researchBriefPolicy"
     }
   },
   "recoveryPolicy": {
@@ -126,11 +137,11 @@
   ],
   "phaseSkipRules": {
     "trivial": {
-      "skip": ["lock-requirements", "adversarial-critique", "revise"],
+      "skip": ["lock-requirements", "adversarial-critique", "revise", "self-review", "critique"],
       "reason": "Trivial tasks don't need requirement contracts or critique cycles."
     },
     "research-only": {
-      "skip": ["lock-requirements", "choose-approach", "adversarial-critique", "revise", "execute-or-answer"],
+      "skip": ["lock-requirements", "choose-approach", "adversarial-critique", "revise", "execute-or-answer", "self-review", "critique"],
       "reason": "Research tasks collect and surface information; they don't implement."
     },
     "review-only": {
@@ -138,12 +149,52 @@
       "reason": "Review tasks analyze existing code; they produce findings, not implementations."
     },
     "docs-only": {
-      "skip": ["adversarial-critique"],
+      "skip": ["adversarial-critique", "revise", "self-review", "critique"],
       "reason": "Documentation changes need breadth scan and requirement awareness but not a full critique cycle."
     },
     "test-only": {
-      "skip": ["adversarial-critique"],
+      "skip": ["adversarial-critique", "self-review"],
       "reason": "Test-only tasks follow the spec; critique the implementation under test, not the tests themselves."
     }
+  },
+  "auditPolicy": {
+    "description": "Recurring adversarial self-audit cadence and triggers.",
+    "triggers": {
+      "onDemand": "@orchestrator audit",
+      "everyNClosedNonTrivialTasksPerSurface": 10,
+      "onAnyBlockedFinalState": true
+    },
+    "charterDocument": "docs/runbooks/adversarial-audit.md",
+    "outputArtifactDirectory": "docs/specs/research/",
+    "outputSlugPattern": "audit-<surface>-<YYYYMMDD>.md",
+    "minimumDimensionsScored": 12,
+    "capabilityClassification": ["fully-real", "partially-real", "illusory"],
+    "missingEnforcementImpliesIllusory": true,
+    "stateFlags": [
+      "audit_due",
+      "audit_due_reason",
+      "last_blocked_at",
+      "closed_task_count_per_surface",
+      "last_audit_at_per_surface"
+    ]
+  },
+  "researchBriefPolicy": {
+    "description": "When the orchestrator must compile durable decision knowledge in docs/specs/research/. Complementary to failure_index, which captures failure knowledge.",
+    "requiredWhen": [
+      "external-source-changed-non-trivial-plan",
+      "conflicting-sources-resolved",
+      "framework-or-stack-decision-required-evidence",
+      "audit-mode-output"
+    ],
+    "schemaDocument": "docs/specs/research/README.md",
+    "linkRequirementFromSpecsThatDependOnIt": true
+  },
+  "frontendQualityTargets": {
+    "description": "Hard, machine-checkable thresholds for elite-tier frontend deliverables. Authoritative numbers live in performance.instructions.md.",
+    "coreWebVitalsRef": ".github/instructions/performance.instructions.md",
+    "bundleDeltaPerNewPage_kBGzipped": 20,
+    "minTestCoverageLineAndBranchPercent": 80,
+    "wcagLevel": "2.2-AA",
+    "asyncStatesRequired": ["idle", "loading", "success", "empty", "error"]
   }
 }

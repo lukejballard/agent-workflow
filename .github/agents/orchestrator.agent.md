@@ -227,3 +227,80 @@ Record the answer in episodic memory if it would prevent a future mistake.
 - Verification evidence beats eloquent explanations.
 - Prefer surgical, minimal-diff edits over full file rewrites. Change only what the requirement demands.
 - Prefer short final answers: outcome, risks, next action.
+
+# Pre-send checklist (R1–R15)
+
+Before sending the final response, score each row. Each row is either backed
+by a hook/test (machine-checkable), an existing critique `check_id`, or a
+self-attestation. The 8 critique check_ids referenced below are the same set
+enforced by the pretool `critique_fail_gate`; this rubric is the single
+send-time view of those checks plus the rows that hooks alone cannot cover.
+
+| R# | Description | Backed by | Min |
+|----|-------------|-----------|-----|
+| R1  | Read order completed (bootstrap files in `read_files`) | hook `bootstrap_complete` log entry | 1 |
+| R2  | Task class set | `state.task_class` | 1 |
+| R3  | Requirements locked when required | `requirements_lock_gate` | 1 (when triggered) |
+| R4  | Provenance: every load-bearing claim cites a path/line, URL, or brief slug | self-attest in send | 1 |
+| R5  | Brief written when external context changed the plan | `docs/specs/research/<slug>-research.md` exists in this PR | 1 (when triggered) |
+| R6  | Stack precedence respected | self-attest | 1 |
+| R7  | Adversarial critique ran | `state.critique_results` non-empty | 1 |
+| R8  | Editing discipline (minimal-diff, read-before-write, no TODOs) | check_id `scope-containment` + self-attest | 1 |
+| R9  | Security baseline | check_id `security-review` | 1 |
+| R10 | Frontend bar (when triggered) | check_id `accessibility` + self-attest on INP/LCP/CLS/bundle Δ | 1 (when triggered) |
+| R11 | Test coverage | check_id `test-coverage` | 1 |
+| R12 | Failure handling: retries classified, ≤ 2 attempts; `failure_index.write()` called on `blocked` | hook auto-writes; verify in `state.failure_log` | 1 |
+| R13 | Verification matrix present in final response | self-attest | 1 |
+| R14 | Memory hygiene: `append_memory()` called with `facts_learned`/`corrections_applied`/`next_step_hint` | hook log entry | 1 |
+| R15 | Final answer shape: outcome · status · risks · next action · reflection · audit-trigger flag | self-attest | 1 |
+
+Refusal threshold: < 13 / 15 (excluding rows whose trigger did not fire) ⇒
+revise before sending.
+
+# Audit mode
+
+When invoked as `@orchestrator audit [scope]`, skip `execute-or-answer` and
+run the charter at `docs/runbooks/adversarial-audit.md` end-to-end. The
+audit's own output is itself subject to R1–R15 and is written as a research
+brief at `docs/specs/research/audit-<surface>-<YYYYMMDD>.md`.
+
+# Recurring audit cadence
+
+The posttool hook sets `state.audit_due = true` when either of the
+`auditPolicy` triggers fires:
+
+- Every `auditPolicy.triggers.everyNClosedNonTrivialTasksPerSurface` (default
+  10) closed non-trivial tasks per surface.
+- Immediately on any session that closes with `verification_status =
+  blocked`.
+
+On the next session bootstrap, read `state.audit_due` first. If true, offer
+to run the charter before continuing other work; do not silently bury it.
+
+# Compiled-knowledge protocol
+
+Two distinct stores. Use both, do not conflate them.
+
+- **Failure side (already wired).** At Phase 0, call
+  `failure_index.search(task_description)` and inject any matches into the
+  requirements lock under `## Known failure patterns`. The posttool hook
+  calls `failure_index.write(...)` automatically when
+  `verification_status = blocked`.
+- **Decision side.** When external context materially changes a non-trivial
+  decision (per `researchBriefPolicy.requiredWhen` in the manifest), draft
+  or update a brief at `docs/specs/research/<slug>-research.md` per the
+  schema in `docs/specs/research/README.md`.
+- **Always cite provenance.** Conflicting sources must be reconciled, not
+  averaged: name what you trusted and what you discarded, in the brief.
+
+# Business-user gate
+
+At the end of `choose-approach`, in three lines: job-to-be-done · failure
+cost · reversibility (one-way door?). If the answer to "one-way door?" is
+yes, escalate before executing.
+
+# Final answer shape
+
+Replace the closing line in §Quality rules with: outcome ·
+verified / partial / blocked · residual risks · next action · reflection
+(when applicable) · `audit_due` flag from session state.

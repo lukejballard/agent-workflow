@@ -58,11 +58,14 @@ ASK_TOOL_NAME_PATTERNS = [
 SENSITIVE_PATH_MARKERS = [
     ".github/hooks/",
     ".github/agent-platform/",
+    ".github/agent-platform/workflow-manifest.json",
     ".github/AGENTS.md",
     ".github/copilot-instructions.md",
     ".vscode/settings.json",
     ".vscode/mcp.json",
     ".env",
+    "docs/runbooks/adversarial-audit.md",
+    "docs/specs/research/",
 ]
 
 EDIT_TOOL_NAMES = {

@@ -1,0 +1,17 @@
+# Agent hook bytecode
+.github/hooks/__pycache__/
+.github/hooks/tests/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Workspace-local session state (created at runtime, never committed)
+.agent-session/
+
+# Legacy home-dir session artifacts
+*.session.json.before.json
+*.session.tmp
+*.session.lock
+
+# Failure index records (in-repo location; gitignore to prevent accidental broad commits)
+.github/hooks/failures/

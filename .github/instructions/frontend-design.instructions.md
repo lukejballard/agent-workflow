@@ -74,3 +74,38 @@ Before marking a UI task complete, verify:
 - [ ] Dark mode works and passes contrast checks.
 - [ ] All interactive elements meet minimum 44x44px touch target.
 - [ ] Keyboard navigation works through all interactive elements.
+- [ ] Every data-bound view models all five async states (see below).
+
+## Async-state contract
+Every data-bound view must explicitly model all five async states declared in
+`frontendQualityTargets.asyncStatesRequired`
+(`.github/agent-platform/workflow-manifest.json`):
+
+- **idle** — no request in flight, no stale data shown without indication.
+- **loading** — skeleton or spinner with `aria-busy="true"`; never a blank
+  region.
+- **success** — rendered data with deterministic ordering and a stable key.
+- **empty** — explicit message and (when meaningful) a primary action;
+  distinguish "no data yet" from "filtered to nothing".
+- **error** — actionable message, retry affordance when safe, never an
+  unhandled rejection in the console.
+
+Performance budgets (Core Web Vitals, bundle size) live in
+`performance.instructions.md` — do not restate them here.
+
+## AI-native UX
+For interfaces that stream model output:
+
+- Token streaming uses backpressure-aware rendering (chunk into animation
+  frames or `requestIdleCallback` rather than synchronously appending per
+  token).
+- Abort the in-flight request on unmount and on route change.
+- Reconcile optimistic UI on server truth: keep the local placeholder until
+  the server-confirmed token replaces it, never keep both.
+- Provide pause / resume / regenerate affordances for any stream the user
+  can usefully control.
+- Preserve scroll anchor on stream growth: do not yank the user to the
+  bottom unless they were already pinned there.
+- Never inject unsanitized model output into the DOM. No
+  `dangerouslySetInnerHTML` of model strings; render through a sanitizing
+  markdown component.

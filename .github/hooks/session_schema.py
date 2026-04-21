@@ -1,7 +1,6 @@
 """Typed session state with validation and versioned migration."""
 from __future__ import annotations
 
-import os
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
@@ -9,7 +8,7 @@ from typing import Any, Literal
 from session_io_support import read_session_data, write_session_data
 from session_log import append_log
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 6
 VALID_PHASES = (
     "goal-anchor", "classify", "breadth-scan", "depth-dive",
     "lock-requirements", "choose-approach", "adversarial-critique", "revise",
@@ -22,7 +21,9 @@ VALID_CRITIQUE_VERDICTS = ("PASS", "WARN", "FAIL")
 PHASE_INDEX = {phase: i for i, phase in enumerate(VALID_PHASES)}
 
 def _phase_budget_detail(estimated_tokens_used: int) -> dict[str, float | int]:
-    budget = int(os.environ.get("AGENT_TOKEN_BUDGET", "150000"))
+    from token_budget import get_budget
+
+    budget = get_budget()
     utilization = (estimated_tokens_used / budget) * 100 if budget > 0 else 0.0
     return {"estimated_tokens_used": estimated_tokens_used, "token_budget": budget, "token_budget_utilization_pct": round(utilization, 1)}
 
@@ -66,6 +67,13 @@ class SessionState:
     estimated_tokens_used: int = 0
     critique_results: list[CritiqueResult] = field(default_factory=list)
     phase_token_costs: dict[str, int] = field(default_factory=dict)
+    closed_task_count_per_surface: dict[str, int] = field(default_factory=dict)
+    last_audit_at_per_surface: dict[str, float] = field(default_factory=dict)
+    last_blocked_at: float = 0.0
+    audit_due: bool = False
+    audit_due_reason: str = ""
+    verification_matrix_present: bool = False
+    research_brief_required: bool = False
     last_updated: float = 0.0
 
     def validate(self) -> list[str]:
@@ -86,10 +94,6 @@ class SessionState:
             errors.append("subtask_attempt_counts must be a dict")
         if not isinstance(self.confidence, (int, float)) or not 0.0 <= float(self.confidence) <= 1.0:
             errors.append(f"confidence must be between 0.0 and 1.0, got {self.confidence}")
-        if not isinstance(self.phase_index, int) or self.phase_index < 0:
-            errors.append(f"phase_index must be non-negative int, got {self.phase_index}")
-        if not isinstance(self.estimated_tokens_used, int) or self.estimated_tokens_used < 0:
-            errors.append("estimated_tokens_used must be a non-negative int")
         if not isinstance(self.critique_results, list):
             errors.append("critique_results must be a list")
         else:
@@ -104,6 +108,24 @@ class SessionState:
             errors.append("phase_token_costs must be a dict")
         elif any(not isinstance(value, int) or value < 0 for value in self.phase_token_costs.values()):
             errors.append("phase_token_costs values must be non-negative ints")
+        if not isinstance(self.closed_task_count_per_surface, dict):
+            errors.append("closed_task_count_per_surface must be a dict")
+        elif any(not isinstance(value, int) or value < 0 for value in self.closed_task_count_per_surface.values()):
+            errors.append("closed_task_count_per_surface values must be non-negative ints")
+        if not isinstance(self.last_audit_at_per_surface, dict):
+            errors.append("last_audit_at_per_surface must be a dict")
+        elif any(not isinstance(value, (int, float)) or value < 0 for value in self.last_audit_at_per_surface.values()):
+            errors.append("last_audit_at_per_surface values must be non-negative numbers")
+        if not isinstance(self.last_blocked_at, (int, float)) or self.last_blocked_at < 0:
+            errors.append("last_blocked_at must be a non-negative number")
+        if not isinstance(self.audit_due, bool):
+            errors.append("audit_due must be a bool")
+        if not isinstance(self.audit_due_reason, str):
+            errors.append("audit_due_reason must be a str")
+        if not isinstance(self.verification_matrix_present, bool):
+            errors.append("verification_matrix_present must be a bool")
+        if not isinstance(self.research_brief_required, bool):
+            errors.append("research_brief_required must be a bool")
         if self.phase_index != PHASE_INDEX.get(self.current_phase, -1):
             errors.append(f"phase_index {self.phase_index} does not match current_phase '{self.current_phase}'")
         return errors
@@ -116,6 +138,28 @@ class SessionState:
         data["critique_results"] = [result.to_dict() for result in self.critique_results]
         data["phase_token_costs"] = dict(self.phase_token_costs)
         return data
+
+    def reset_for_new_task(self, task_class: str, allowed_paths: list[str]) -> None:
+        """Reset transient task state while preserving durable counters and history."""
+        self.task_class = task_class
+        self.allowed_paths = list(allowed_paths)
+        self.current_phase = "goal-anchor"
+        self.phase_index = 0
+        self.requirements_locked = False
+        self.verification_status = "pending"
+        self.confidence = 1.0
+        self.critique_results = []
+        self.phase_token_costs = {}
+        self.subtask_attempt_counts = {}
+        self.audit_due = False
+        self.audit_due_reason = ""
+        self.verification_matrix_present = False
+        self.scope_justification = ""
+        self.estimated_tokens_used = 0
+        self.tool_call_count = 0
+        self.edit_count = 0
+        # Preserve: closed_task_count_per_surface, last_audit_at_per_surface,
+        # last_blocked_at, failure_log, phase_history, read_files, bootstrap_complete.
 
     def declare_phase(self, target_phase: str) -> tuple[bool, str]:
         current_idx = PHASE_INDEX.get(self.current_phase)
@@ -151,6 +195,15 @@ class SessionState:
         if version < 4:
             data.setdefault("critique_results", [])
             data.setdefault("phase_token_costs", {})
+        if version < 5:
+            data.setdefault("closed_task_count_per_surface", {})
+            data.setdefault("last_audit_at_per_surface", {})
+            data.setdefault("last_blocked_at", 0.0)
+            data.setdefault("audit_due", False)
+            data.setdefault("audit_due_reason", "")
+            data.setdefault("verification_matrix_present", False)
+        if version < 6:
+            data.setdefault("research_brief_required", False)
         if version < SCHEMA_VERSION:
             data["schema_version"] = SCHEMA_VERSION
         if not data.get("current_phase"):

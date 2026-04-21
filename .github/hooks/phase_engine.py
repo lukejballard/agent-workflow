@@ -46,7 +46,7 @@ EDIT_PHASES = frozenset(
 # Task classes that skip certain phases (from workflow-manifest.json)
 PHASE_SKIP_RULES: dict[str, frozenset[str]] = {
     "trivial": frozenset(
-        {"lock-requirements", "adversarial-critique", "revise"}
+        {"lock-requirements", "adversarial-critique", "revise", "self-review", "critique"}
     ),
     "research-only": frozenset(
         {
@@ -55,6 +55,8 @@ PHASE_SKIP_RULES: dict[str, frozenset[str]] = {
             "adversarial-critique",
             "revise",
             "execute-or-answer",
+            "self-review",
+            "critique",
         }
     ),
     "review-only": frozenset(
@@ -65,8 +67,8 @@ PHASE_SKIP_RULES: dict[str, frozenset[str]] = {
             "execute-or-answer",
         }
     ),
-    "docs-only": frozenset({"adversarial-critique"}),
-    "test-only": frozenset({"adversarial-critique"}),
+    "docs-only": frozenset({"adversarial-critique", "revise", "self-review", "critique"}),
+    "test-only": frozenset({"adversarial-critique", "self-review"}),
 }
 
 

@@ -23,6 +23,7 @@ from session_schema import read_session, write_session
 from token_budget import check_budget, get_budget, record_token_usage
 
 MAX_TOOL_CALLS = int(os.environ.get("AGENT_MAX_TOOL_CALLS", "50"))
+TOOL_CALL_DENY_THRESHOLD = MAX_TOOL_CALLS * 2
 LOW_CONFIDENCE_THRESHOLD = 0.4
 REQUIRES_LOCK_TASK_CLASSES = {"brownfield-improvement", "greenfield-feature", "implement-from-existing-spec"}
 CRITIQUE_EXEMPT_PHASES = {
@@ -103,13 +104,23 @@ def main() -> int:
     limit_reached, call_count = check_and_increment_tool_call()
     if limit_reached:
         append_log("budget_exceeded", {"count": call_count, "tool": tool_name})
-        emit_pretool_decision(
-            "ask",
-            f"Tool call limit reached ({call_count}/{MAX_TOOL_CALLS}). Continuing may indicate an agent retry loop.",
-            additional_context=(
-                "Override the limit with AGENT_MAX_TOOL_CALLS when the task is genuinely large."
-            ),
-        )
+        if call_count >= TOOL_CALL_DENY_THRESHOLD:
+            emit_pretool_decision(
+                "deny",
+                f"Tool call count ({call_count}) has exceeded the hard ceiling ({TOOL_CALL_DENY_THRESHOLD}). Session appears stuck in a retry loop. Declare a final answer or abort.",
+                additional_context=(
+                    "Hard limit. The agent has already passed the soft limit and continued. "
+                    "This session must be closed. Start a new session or reset the session state."
+                ),
+            )
+        else:
+            emit_pretool_decision(
+                "ask",
+                f"Tool call limit reached ({call_count}/{MAX_TOOL_CALLS}). Continuing may indicate an agent retry loop.",
+                additional_context=(
+                    "Override the limit with AGENT_MAX_TOOL_CALLS when the task is genuinely large."
+                ),
+            )
         return 0
 
     if handle_remote_write_tool(tool_name):

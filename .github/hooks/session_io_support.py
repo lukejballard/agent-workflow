@@ -7,11 +7,27 @@ from pathlib import Path
 from typing import Any
 
 
+def _workspace_root() -> Path | None:
+    """Walk up from this file to find the nearest directory containing .git."""
+    p = Path(__file__).resolve().parent
+    for _ in range(8):
+        if (p / ".git").exists():
+            return p
+        parent = p.parent
+        if parent == p:
+            return None
+        p = parent
+    return None
+
+
 def default_session_path() -> str:
-    return os.environ.get(
-        "AGENT_SESSION_FILE",
-        str(Path.home() / ".agent-session" / "session.json"),
-    )
+    explicit = os.environ.get("AGENT_SESSION_FILE")
+    if explicit:
+        return explicit
+    root = _workspace_root()
+    if root is not None:
+        return str(root / ".agent-session" / "session.json")
+    return str(Path.home() / ".agent-session" / "session.json")
 
 
 def read_session_data(path: str | None = None) -> dict[str, Any] | None:
