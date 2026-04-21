@@ -1,50 +1,49 @@
-"""Typed session state with validation and atomic I/O.
-
-Provides a structured schema for agent session state to replace
-ad-hoc dict access with validated, versioned state objects.
-Handles migration from v1 (unversioned) format transparently.
-"""
+"""Typed session state with validation and versioned migration."""
 from __future__ import annotations
 
-import json
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
-SCHEMA_VERSION = 2
+from session_io_support import read_session_data, write_session_data
+from session_log import append_log
 
+SCHEMA_VERSION = 4
 VALID_PHASES = (
-    "goal-anchor",
-    "classify",
-    "breadth-scan",
-    "depth-dive",
-    "lock-requirements",
-    "choose-approach",
-    "adversarial-critique",
-    "revise",
-    "execute-or-answer",
-    "traceability-and-verify",
+    "goal-anchor", "classify", "breadth-scan", "depth-dive",
+    "lock-requirements", "choose-approach", "adversarial-critique", "revise",
+    "execute-or-answer", "self-review", "critique", "traceability-and-verify",
 )
+VALID_VERIFICATION_STATUSES = ("pending", "in-progress", "verified", "partially-verified", "blocked")
 
-VALID_VERIFICATION_STATUSES = (
-    "pending",
-    "in-progress",
-    "verified",
-    "partially-verified",
-    "blocked",
-)
+VALID_CRITIQUE_VERDICTS = ("PASS", "WARN", "FAIL")
 
 PHASE_INDEX = {phase: i for i, phase in enumerate(VALID_PHASES)}
 
+def _phase_budget_detail(estimated_tokens_used: int) -> dict[str, float | int]:
+    budget = int(os.environ.get("AGENT_TOKEN_BUDGET", "150000"))
+    utilization = (estimated_tokens_used / budget) * 100 if budget > 0 else 0.0
+    return {"estimated_tokens_used": estimated_tokens_used, "token_budget": budget, "token_budget_utilization_pct": round(utilization, 1)}
 
-def _default_session_path() -> str:
-    return os.environ.get(
-        "AGENT_SESSION_FILE",
-        str(Path.home() / ".agent-session" / "session.json"),
-    )
+@dataclass
+class CritiqueResult:
+    check_id: str
+    verdict: Literal["PASS", "WARN", "FAIL"]
+    rationale: str
+    suggested_fix: str = ""
 
+    def to_dict(self) -> dict[str, Any]:
+        return {"check_id": self.check_id, "verdict": self.verdict, "rationale": self.rationale, "suggested_fix": self.suggested_fix}
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "CritiqueResult":
+        return cls(
+            check_id=str(data.get("check_id", "")),
+            verdict=str(data.get("verdict", "PASS")),
+            rationale=str(data.get("rationale", "")),
+            suggested_fix=str(data.get("suggested_fix", "")),
+        )
 
 @dataclass
 class SessionState:
@@ -61,109 +60,128 @@ class SessionState:
     verification_status: str = "pending"
     task_class: str = ""
     scope_justification: str = ""
+    subtask_attempt_counts: dict[str, int] = field(default_factory=dict)
+    confidence: float = 1.0
+    failure_log: list[dict[str, Any]] = field(default_factory=list)
+    estimated_tokens_used: int = 0
+    critique_results: list[CritiqueResult] = field(default_factory=list)
+    phase_token_costs: dict[str, int] = field(default_factory=dict)
     last_updated: float = 0.0
 
     def validate(self) -> list[str]:
         """Return list of validation errors. Empty list means valid."""
         errors: list[str] = []
         if self.current_phase not in VALID_PHASES:
-            errors.append(
-                f"Invalid phase '{self.current_phase}'; "
-                f"must be one of {VALID_PHASES}"
-            )
-        if not isinstance(self.phase_index, int) or self.phase_index < 0:
-            errors.append(
-                f"phase_index must be non-negative int, got {self.phase_index}"
-            )
-        if not isinstance(self.tool_call_count, int) or self.tool_call_count < 0:
-            errors.append(
-                f"tool_call_count must be non-negative int, got {self.tool_call_count}"
-            )
-        if not isinstance(self.read_files, list):
-            errors.append("read_files must be a list")
-        if not isinstance(self.allowed_paths, list):
-            errors.append("allowed_paths must be a list")
+            errors.append(f"Invalid phase '{self.current_phase}'; must be one of {VALID_PHASES}")
+        for name in ("phase_index", "tool_call_count", "edit_count", "estimated_tokens_used"):
+            value = getattr(self, name)
+            if not isinstance(value, int) or value < 0:
+                errors.append(f"{name} must be a non-negative int, got {value}")
+        for name in ("read_files", "allowed_paths", "failure_log"):
+            if not isinstance(getattr(self, name), list):
+                errors.append(f"{name} must be a list")
         if self.verification_status not in VALID_VERIFICATION_STATUSES:
-            errors.append(
-                f"Invalid verification_status '{self.verification_status}'"
-            )
-        if not isinstance(self.edit_count, int) or self.edit_count < 0:
-            errors.append(
-                f"edit_count must be non-negative int, got {self.edit_count}"
-            )
+            errors.append(f"Invalid verification_status '{self.verification_status}'")
+        if not isinstance(self.subtask_attempt_counts, dict):
+            errors.append("subtask_attempt_counts must be a dict")
+        if not isinstance(self.confidence, (int, float)) or not 0.0 <= float(self.confidence) <= 1.0:
+            errors.append(f"confidence must be between 0.0 and 1.0, got {self.confidence}")
+        if not isinstance(self.phase_index, int) or self.phase_index < 0:
+            errors.append(f"phase_index must be non-negative int, got {self.phase_index}")
+        if not isinstance(self.estimated_tokens_used, int) or self.estimated_tokens_used < 0:
+            errors.append("estimated_tokens_used must be a non-negative int")
+        if not isinstance(self.critique_results, list):
+            errors.append("critique_results must be a list")
+        else:
+            for result in self.critique_results:
+                if not isinstance(result, CritiqueResult):
+                    errors.append("critique_results must contain CritiqueResult entries")
+                    break
+                if result.verdict not in VALID_CRITIQUE_VERDICTS:
+                    errors.append(f"Invalid critique verdict '{result.verdict}'")
+                    break
+        if not isinstance(self.phase_token_costs, dict):
+            errors.append("phase_token_costs must be a dict")
+        elif any(not isinstance(value, int) or value < 0 for value in self.phase_token_costs.values()):
+            errors.append("phase_token_costs values must be non-negative ints")
         if self.phase_index != PHASE_INDEX.get(self.current_phase, -1):
-            errors.append(
-                f"phase_index {self.phase_index} does not match "
-                f"current_phase '{self.current_phase}'"
-            )
+            errors.append(f"phase_index {self.phase_index} does not match current_phase '{self.current_phase}'")
         return errors
 
     def is_valid(self) -> bool:
         return len(self.validate()) == 0
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        data["critique_results"] = [result.to_dict() for result in self.critique_results]
+        data["phase_token_costs"] = dict(self.phase_token_costs)
+        return data
+
+    def declare_phase(self, target_phase: str) -> tuple[bool, str]:
+        current_idx = PHASE_INDEX.get(self.current_phase)
+        target_idx = PHASE_INDEX.get(target_phase)
+        if current_idx is None:
+            return False, f"Current phase '{self.current_phase}' is invalid."
+        if target_idx is None:
+            return False, f"Target phase '{target_phase}' is invalid."
+        if target_idx <= current_idx:
+            return False, f"Phase transition must move forward from '{self.current_phase}' to a later phase; got '{target_phase}'."
+        old_phase = self.current_phase
+        self.current_phase = target_phase
+        self.phase_index = target_idx
+        transition = {"from": old_phase, "to": target_phase, "at_tool_call": self.tool_call_count, "read_count": len(self.read_files), "edit_count": self.edit_count, "timestamp": time.time()}
+        self.phase_history.append(transition)
+        append_log("phase_transition", {**transition, **_phase_budget_detail(self.estimated_tokens_used)})
+        return True, f"Phase advanced from '{old_phase}' to '{target_phase}'."
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SessionState:
-        """Create from dict with v1-to-v2 migration."""
         if not isinstance(data, dict):
             return cls()
-
         version = data.get("schema_version", 1)
-
-        # Migrate v1 (unversioned) -> v2
+        if not isinstance(version, int):
+            version = 1
+        if version < 2:
+            for key, value in (("edit_count", 0), ("phase_history", []), ("bootstrap_complete", False), ("requirements_locked", False), ("verification_status", "pending"), ("task_class", ""), ("scope_justification", ""), ("last_updated", 0.0)):
+                data.setdefault(key, value)
+        if version < 3:
+            for key, value in (("subtask_attempt_counts", {}), ("confidence", 1.0), ("failure_log", [])):
+                data.setdefault(key, value)
+        data.setdefault("estimated_tokens_used", 0)
+        if version < 4:
+            data.setdefault("critique_results", [])
+            data.setdefault("phase_token_costs", {})
         if version < SCHEMA_VERSION:
             data["schema_version"] = SCHEMA_VERSION
-            data.setdefault("phase_index", 0)
-            data.setdefault("edit_count", 0)
-            data.setdefault("phase_history", [])
-            data.setdefault("bootstrap_complete", False)
-            data.setdefault("requirements_locked", False)
-            data.setdefault("verification_status", "pending")
-            data.setdefault("task_class", "")
-            data.setdefault("scope_justification", "")
-            data.setdefault("last_updated", 0.0)
-            # Fix empty or missing current_phase
-            if not data.get("current_phase"):
-                data["current_phase"] = "goal-anchor"
-            # Sync phase_index with current_phase
-            phase = data.get("current_phase", "goal-anchor")
-            data["phase_index"] = PHASE_INDEX.get(phase, 0)
-
+        if not data.get("current_phase"):
+            data["current_phase"] = "goal-anchor"
+        raw_critique = data.get("critique_results", [])
+        if isinstance(raw_critique, list):
+            data["critique_results"] = [item if isinstance(item, CritiqueResult) else CritiqueResult.from_dict(item) for item in raw_critique if isinstance(item, (CritiqueResult, dict))]
+        else:
+            data["critique_results"] = []
+        raw_costs = data.get("phase_token_costs", {})
+        if isinstance(raw_costs, dict):
+            data["phase_token_costs"] = {str(key): value for key, value in raw_costs.items() if isinstance(value, int) and value >= 0}
+        else:
+            data["phase_token_costs"] = {}
+        phase = data.get("current_phase", "goal-anchor")
+        data["phase_index"] = PHASE_INDEX.get(phase, 0)
         known = {f for f in cls.__dataclass_fields__}
         filtered = {k: v for k, v in data.items() if k in known}
-
         try:
-            state = cls(**filtered)
+            return cls(**filtered)
         except TypeError:
             return cls()
 
-        return state
-
 
 def read_session(path: str | None = None) -> SessionState:
-    """Read and validate session state from disk."""
-    filepath = Path(path or _default_session_path())
-    try:
-        raw = json.loads(filepath.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError, OSError):
+    raw = read_session_data(path)
+    if raw is None:
         return SessionState()
-
     return SessionState.from_dict(raw)
 
 
 def write_session(state: SessionState, path: str | None = None) -> bool:
-    """Validate and atomically write session state. Returns success."""
     state.last_updated = time.time()
-    filepath = Path(path or _default_session_path())
-    tmp = filepath.with_suffix(".tmp")
-    try:
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-        tmp.write_text(
-            json.dumps(state.to_dict(), indent=2), encoding="utf-8"
-        )
-        tmp.replace(filepath)
-        return True
-    except OSError:
-        return False
+    return write_session_data(state.to_dict(), path)

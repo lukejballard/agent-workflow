@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from typing import Any
 
+from failure_index import FailureIndex
 from session_schema import read_session, write_session
-from phase_engine import detect_phase, advance_phase, is_bootstrap_complete
-from session_log import append_log, append_memory
+from phase_engine import detect_phase, is_bootstrap_complete
+from session_io_support import read_session_snapshot
+from session_log import append_log
 
 READ_TOOL_NAMES: frozenset[str] = frozenset(
     {
@@ -77,6 +80,14 @@ def record_edit(tool_name: str, state: Any) -> bool:
     return was_zero
 
 
+def persist_state(state: Any, tool_name: str) -> None:
+    if write_session(state):
+        return
+    append_log("session_write_retry", {"tool": tool_name, "phase": state.current_phase})
+    if not write_session(state):
+        append_log("session_write_failed", {"tool": tool_name, "phase": state.current_phase})
+
+
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
@@ -90,14 +101,14 @@ def main() -> int:
         tool_input = {}
 
     state = read_session()
+    previous_session = read_session_snapshot() or {}
+    old_verification = previous_session.get(
+        "verification_status", state.verification_status
+    )
 
-    # Track reads
-    new_read = record_read(tool_name, tool_input, state)
-
-    # Track edits
+    record_read(tool_name, tool_input, state)
     first_edit = record_edit(tool_name, state)
 
-    # Check bootstrap completion
     if not state.bootstrap_complete and is_bootstrap_complete(state.read_files):
         state.bootstrap_complete = True
         append_log("bootstrap_complete", {
@@ -105,25 +116,34 @@ def main() -> int:
             "tool_call": state.tool_call_count,
         })
 
-    # Auto-detect and advance phase
-    old_phase = state.current_phase
     detected = detect_phase(state)
-    if advance_phase(state, detected):
-        append_log("phase_transition", {
-            "from": old_phase,
-            "to": state.current_phase,
-            "trigger": "auto-detect",
+    if detected != state.current_phase:
+        append_log("phase_advisory", {
+            "current": state.current_phase,
+            "suggested": detected,
             "tool": tool_name,
         })
-        # Write episodic memory for completed phase
-        append_memory(
-            phase=old_phase,
-            summary=f"Phase '{old_phase}' completed. "
-                    f"Reads: {len(state.read_files)}, Edits: {state.edit_count}.",
-            verification=state.verification_status,
+
+    if state.verification_status == "blocked" and old_verification != "blocked":
+        failure = FailureIndex().write(
+            task_class=state.task_class or "unknown",
+            phase_at_failure=state.current_phase,
+            symptom=(
+                f"Session blocked at phase '{state.current_phase}' after "
+                f"{state.edit_count} edits and {state.tool_call_count} tool calls."
+            ),
+            root_cause="",
+            prevention_pattern="",
+            task_summary=state.scope_justification,
+        )
+        state.failure_log.append(
+            {
+                "ts": time.time(),
+                "verification_status": "blocked",
+                "failure_path": str(failure),
+            }
         )
 
-    # Log first edit
     if first_edit:
         edit_target = _extract_path(tool_input) or "(unknown)"
         append_log("first_edit", {
@@ -132,7 +152,7 @@ def main() -> int:
             "tool": tool_name,
         })
 
-    write_session(state)
+    persist_state(state, tool_name)
     sys.stdout.write(json.dumps({"continue": True}))
     return 0
 

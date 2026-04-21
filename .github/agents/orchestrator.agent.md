@@ -29,6 +29,7 @@ and verification status explicit while you work.
 ## Phase 0 — Bootstrap (every task)
 1. Read `.github/AGENTS.md`.
 2. Read `.github/agent-platform/workflow-manifest.json`.
+3. Non-trivial tasks only: call `read_memory_recent_first()` to load the 3 most recent episodic memory entries, then call `get_relevant_memory(task_description)` and inject any result into working context. If `failure_index.search(task_description)` returns matches, inject them under a `Past failures` heading before proceeding to classification.
 
 ## Phase 1 — Surface-specific loading
 After classification, load coding standards from `.github/instructions/` and scoped
@@ -57,10 +58,12 @@ If gaps exist, repair the requirement lock before implementation.
 
 # Session state
 The hook system maintains a typed session state file with:
-- `current_phase`: auto-detected and enforced by hooks.
+- `current_phase`: explicitly declared and enforced by hooks; advisory suggestions are logged separately.
 - `allowed_paths`: set these at task start to scope edits.
 - `tool_call_count`, `edit_count`, `read_files`: tracked automatically.
 - `requirements_locked`: set to `true` when requirements are locked.
+- `critique_results`: structured PASS/WARN/FAIL review checks written after implementation.
+- `phase_token_costs`: approximate token ledger keyed by the active phase.
 - `task_class`: set after classification to enable phase skip rules.
 Phase transitions and gate decisions are logged to a `.log.jsonl` file
 for observability.
@@ -88,6 +91,7 @@ Preferred sources, in order:
 2. user-provided requirement text
 3. inline requirements contract created in working notes
 Skip for trivial tasks.
+When creating an inline requirements contract, prepend any `failure_index.search()` matches under a `## Known failure patterns` section so the requirements explicitly rule out previously seen failure modes.
 
 ## Phase 5 — Choose an approach
 Draft preferred plan. Compare with at least one alternative for non-trivial work.
@@ -142,6 +146,35 @@ After implementation, run the relevant test suite. If tests fail:
 If a test still fails after 2 attempts, surface the failure in the verification matrix
 with the error evidence and move on. Do not delete or skip failing tests.
 
+### Structured critique checkpoint
+
+**Goal:** Produce a structured critique verdict that is machine-readable and
+enforced by the pretool hook.
+
+**Process:**
+1. After the implementation diff is ready, declare `self-review`, then `critique`.
+2. Review the diff against each check below and assign PASS / WARN / FAIL with a one-sentence rationale.
+3. Write all results to session state via a structured session update:
+  ```
+  critique_results = [
+    { check_id: "requirements-coverage", verdict: "PASS", rationale: "..." },
+    { check_id: "no-new-dependencies", verdict: "WARN", rationale: "..." },
+  ]
+  ```
+4. A FAIL verdict on any check will block further edits once the session advances to verification.
+  Use WARN for issues that should be noted but do not block deployment.
+5. After writing `critique_results`, declare `traceability-and-verify` via `declare_phase()`.
+
+**Required checks (check_id: description):**
+- requirements-coverage: Every requirement in the lock contract is addressed
+- no-regression: Existing tests still pass (or have been updated with rationale)
+- no-new-dependencies: No new pip/npm packages added without explicit approval
+- security-review: No secrets in code, no SQL injection surfaces, CORS unchanged
+- error-handling: All new code paths handle errors explicitly
+- test-coverage: New logic has at least one test
+- accessibility: Any new UI components meet WCAG 2.1 AA (frontend tasks only)
+- scope-containment: Edits are within allowed_paths and match stated task scope
+
 ## Phase 9 — Traceability and verification
 Build a verification matrix before closing:
 - requirement or claim
@@ -149,6 +182,28 @@ Build a verification matrix before closing:
 - status: verified, partially verified, or blocked
 Final confidence comes from evidence density, verification depth, and memory freshness.
 Summarize what was verified, what remains unverified, and residual risks.
+
+### Token cost summary
+
+Before producing the verification matrix, read `state.phase_token_costs` and include:
+
+| Phase | Estimated tokens |
+|-------|------------------|
+| breadth-scan | {n} |
+| depth-dive | {n} |
+| execute-or-answer | {n} |
+| ... | ... |
+| **Total** | **{sum}** |
+
+Note: Token counts are approximations (chars ÷ 4). For exact counts, use tiktoken
+outside the hook environment.
+
+### Episodic memory update
+Before closing any non-trivial task, call `append_memory()` with:
+- `facts_learned`: list the 2-5 most useful concrete facts discovered
+- `assumptions_made`: list assumptions that still need verification
+- `corrections_applied`: list anything initially wrong and then fixed
+- `next_step_hint`: one sentence on what the next session should prioritize
 
 ### Reflection
 Before closing any non-trivial task, answer:
